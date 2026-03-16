@@ -1,12 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, ImageBackground, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-
-const HERO_IMAGE = 'https://images.pexels.com/photos/2832039/pexels-photo-2832039.jpeg?auto=compress&w=1200';
 
 export default function LanguageScreen() {
   const router = useRouter();
@@ -19,47 +17,42 @@ export default function LanguageScreen() {
   };
 
   return (
-    <ImageBackground source={{ uri: HERO_IMAGE }} style={styles.container} resizeMode="cover">
-      <View style={styles.overlay} />
-      <View style={[styles.content, { paddingTop: insets.top + 8 }]}>
-        {/* Back button */}
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.white} />
+          <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
         </Pressable>
-
-        {/* Header */}
-        <View style={styles.header}>
-          <Ionicons name="language" size={40} color={Colors.accent} />
-          <Text style={styles.title}>Choose Language</Text>
-          <Text style={styles.subtitle}>Select your preferred language</Text>
-        </View>
-
-        {/* Language List */}
-        <ScrollView
-          style={styles.listContainer}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {languages.map((lang) => (
-            <Pressable
-              key={lang.code}
-              style={({ pressed }) => [
-                styles.languageItem,
-                pressed && styles.languageItemPressed,
-              ]}
-              onPress={() => handleLanguageSelect(lang.code)}
-            >
-              <Text style={styles.flag}>{lang.flag_emoji}</Text>
-              <View style={styles.languageInfo}>
-                <Text style={styles.languageName}>{lang.native_name}</Text>
-                <Text style={styles.languageNameEn}>{lang.name}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={Colors.text.light} />
-            </Pressable>
-          ))}
-        </ScrollView>
+        <Text style={styles.headerTitle}>Choose Language</Text>
+        <View style={{ width: 44 }} />
       </View>
-    </ImageBackground>
+      <Text style={styles.subtitle}>Select your preferred language</Text>
+
+      {/* Language List */}
+      <ScrollView
+        style={styles.listContainer}
+        contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 20 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {languages.map((lang) => (
+          <Pressable
+            key={lang.code}
+            style={({ pressed }) => [
+              styles.languageItem,
+              pressed && styles.languageItemPressed,
+            ]}
+            onPress={() => handleLanguageSelect(lang.code)}
+          >
+            <Text style={styles.flag}>{lang.flag_emoji}</Text>
+            <View style={styles.languageInfo}>
+              <Text style={styles.languageName}>{lang.native_name}</Text>
+              <Text style={styles.languageNameEn}>{lang.name}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={Colors.text.light} />
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -68,13 +61,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(13, 13, 26, 0.8)',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   backButton: {
     width: 44,
@@ -82,53 +73,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: Colors.accent,
-    marginTop: 8,
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text.primary,
   },
   subtitle: {
+    textAlign: 'center',
     fontSize: 14,
-    color: Colors.text.secondary,
-    marginTop: 4,
+    color: Colors.text.light,
+    marginBottom: 8,
   },
   listContainer: {
     flex: 1,
-    marginTop: 12,
   },
   listContent: {
-    paddingBottom: 32,
+    paddingHorizontal: 16,
     gap: 8,
   },
   languageItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(22, 33, 62, 0.9)',
-    borderRadius: 16,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
     padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
   languageItemPressed: {
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
-    borderColor: Colors.accent,
+    backgroundColor: '#FFF8E1',
   },
   flag: {
     fontSize: 32,
-    marginRight: 16,
+    marginRight: 14,
   },
   languageInfo: {
     flex: 1,
   },
   languageName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.white,
+    fontSize: 17,
+    fontWeight: '600',
+    color: Colors.text.primary,
   },
   languageNameEn: {
     fontSize: 13,

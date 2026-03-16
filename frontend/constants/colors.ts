@@ -1,47 +1,42 @@
-// Dark + Gold color palette for Spiš Castle Audio Guide
+// Clean, elegant white theme with gold accents for Spiš Castle Audio Guide
 export const Colors = {
-  // Primary dark theme
-  background: '#0D0D1A',
-  backgroundLight: '#1A1A2E',
-  backgroundCard: '#16213E',
-  cardBg: 'rgba(22, 33, 62, 0.85)',
+  // Light theme backgrounds
+  background: '#FDFAF3',
+  backgroundLight: '#FFFFFF',
+  backgroundCard: '#FFFFFF',
+  cardBg: '#FFFFFF',
   
   // Gold/Yellow accent
-  accent: '#FFD700',
-  accentLight: '#FFED4A',
-  accentDark: '#C5A600',
+  accent: '#C8A84E',
+  accentLight: '#E8D48A',
+  accentDark: '#A08030',
   
   // Text
   text: {
-    primary: '#FFFFFF',
-    secondary: '#B8B8CC',
-    light: '#8888AA',
-    accent: '#FFD700',
-    dark: '#0D0D1A',
+    primary: '#1A1A1A',
+    secondary: '#666666',
+    light: '#999999',
+    accent: '#C8A84E',
+    dark: '#1A1A1A',
   },
   
   // Utility  
   white: '#FFFFFF',
-  black: '#000000',
+  black: '#1A1A1A',
   transparent: 'transparent',
-  overlay: 'rgba(0, 0, 0, 0.6)',
-  overlayDark: 'rgba(0, 0, 0, 0.75)',
-  overlayLight: 'rgba(0, 0, 0, 0.3)',
-  glass: 'rgba(255, 255, 255, 0.08)',
-  glassBorder: 'rgba(255, 255, 255, 0.12)',
+  overlay: 'rgba(0, 0, 0, 0.4)',
+  overlayDark: 'rgba(0, 0, 0, 0.6)',
+  overlayLight: 'rgba(0, 0, 0, 0.2)',
+  glass: 'rgba(255, 255, 255, 0.9)',
+  glassBorder: 'rgba(0, 0, 0, 0.08)',
   
   // Status
   success: '#4CAF50',
-  error: '#FF5252',
+  error: '#E53935',
   warning: '#FFC107',
   info: '#2196F3',
   
-  // Tour type specific
-  express: '#FFD700',
-  family: '#FFD700', 
-  complete: '#FFD700',
-  
   // Borders
-  border: 'rgba(255, 215, 0, 0.2)',
-  borderLight: 'rgba(255, 255, 255, 0.1)',
+  border: 'rgba(200, 168, 78, 0.3)',
+  borderLight: 'rgba(0, 0, 0, 0.08)',
 };

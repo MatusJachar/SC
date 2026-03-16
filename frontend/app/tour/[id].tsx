@@ -1,32 +1,22 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, ImageBackground, Dimensions, ActivityIndicator } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../context/AppContext';
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { API_BASE_URL } from '../../constants/api';
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1660544773706-2e41ec6c45b8?w=1200&q=80';
+const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
 
 export default function TourDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const {
-    tourStops,
-    legends,
-    selectedLanguage,
-    isPlaying,
-    currentStopId,
-    playbackPosition,
-    playbackDuration,
-    playAudio,
-    pauseAudio,
-    resumeAudio,
-    stopAudio,
-    seekAudio,
-    skipForward,
-    skipBackward,
+    tourStops, legends, selectedLanguage,
+    isPlaying, currentStopId, playbackPosition, playbackDuration,
+    playAudio, pauseAudio, resumeAudio, skipForward, skipBackward,
   } = useApp();
 
   const allStops = useMemo(() => [...tourStops, ...legends], [tourStops, legends]);
@@ -74,43 +64,39 @@ export default function TourDetailScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Hero Image */}
-      <ImageBackground source={{ uri: HERO_IMAGE }} style={styles.heroImage} resizeMode="cover">
+      {/* Hero */}
+      <View style={styles.heroContainer}>
+        <Image source={{ uri: CASTLE_IMAGE }} style={styles.heroImage} resizeMode="cover" />
         <View style={styles.heroOverlay} />
         <View style={[styles.heroContent, { paddingTop: insets.top + 8 }]}>
           <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={Colors.white} />
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </Pressable>
           <View style={styles.heroInfo}>
             {isLegend ? (
-              <View style={styles.legendBadge}>
-                <Ionicons name="book" size={16} color={Colors.accent} />
-                <Text style={styles.legendBadgeText}>Legend</Text>
+              <View style={styles.badge}>
+                <Ionicons name="book" size={14} color="#FFD700" />
+                <Text style={styles.badgeText}>Legend</Text>
               </View>
             ) : (
-              <View style={styles.stopBadge}>
-                <Text style={styles.stopBadgeText}>Stop {stop.stop_number}</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>Stop {stop.stop_number}</Text>
               </View>
             )}
             <Text style={styles.heroTitle}>{translation?.title || 'Tour Stop'}</Text>
           </View>
         </View>
-      </ImageBackground>
+      </View>
 
       {/* Content */}
       <View style={styles.contentContainer}>
-        <ScrollView
-          style={styles.scrollContent}
-          contentContainerStyle={styles.scrollContentInner}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContentInner} showsVerticalScrollIndicator={false}>
           <Text style={styles.description}>{translation?.description || ''}</Text>
         </ScrollView>
 
         {/* Audio Player */}
         {hasAudio && (
           <View style={[styles.audioPlayer, { paddingBottom: insets.bottom + 12 }]}>
-            {/* Progress Bar */}
             <View style={styles.progressContainer}>
               <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
             </View>
@@ -118,20 +104,19 @@ export default function TourDetailScreen() {
               <Text style={styles.timeText}>{isCurrentStop ? formatTime(playbackPosition) : '0:00'}</Text>
               <Text style={styles.timeText}>{isCurrentStop ? formatTime(playbackDuration) : '--:--'}</Text>
             </View>
-            {/* Controls */}
             <View style={styles.controls}>
               <Pressable onPress={skipBackward} style={styles.controlButton}>
-                <Ionicons name="play-back" size={28} color={Colors.white} />
+                <Ionicons name="play-back" size={26} color={Colors.text.primary} />
               </Pressable>
               <Pressable onPress={handlePlayPause} style={styles.playButton}>
                 <Ionicons
                   name={isCurrentStop && isPlaying ? 'pause' : 'play'}
-                  size={36}
-                  color={Colors.black}
+                  size={32}
+                  color={Colors.white}
                 />
               </Pressable>
               <Pressable onPress={skipForward} style={styles.controlButton}>
-                <Ionicons name="play-forward" size={28} color={Colors.white} />
+                <Ionicons name="play-forward" size={26} color={Colors.text.primary} />
               </Pressable>
             </View>
           </View>
@@ -139,8 +124,8 @@ export default function TourDetailScreen() {
 
         {!hasAudio && (
           <View style={[styles.noAudio, { paddingBottom: insets.bottom + 12 }]}>
-            <Ionicons name="volume-mute" size={24} color={Colors.text.light} />
-            <Text style={styles.noAudioText}>Audio available via admin panel upload</Text>
+            <Ionicons name="volume-mute" size={22} color={Colors.text.light} />
+            <Text style={styles.noAudioText}>Audio can be uploaded via admin panel</Text>
           </View>
         )}
       </View>
@@ -149,145 +134,28 @@ export default function TourDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  heroImage: {
-    height: 260,
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(13, 13, 26, 0.5)',
-  },
-  heroContent: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  heroInfo: {
-    paddingBottom: 20,
-  },
-  stopBadge: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  stopBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.accent,
-    letterSpacing: 1,
-  },
-  legendBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  legendBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.accent,
-    letterSpacing: 1,
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: Colors.white,
-    lineHeight: 34,
-  },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scrollContent: {
-    flex: 1,
-  },
-  scrollContentInner: {
-    padding: 20,
-    paddingBottom: 32,
-  },
-  description: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    lineHeight: 26,
-  },
-  audioPlayer: {
-    backgroundColor: Colors.backgroundLight,
-    paddingTop: 8,
-    paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  progressContainer: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: Colors.accent,
-    borderRadius: 2,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  timeText: {
-    fontSize: 11,
-    color: Colors.text.light,
-  },
-  controls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 32,
-    paddingVertical: 8,
-  },
-  controlButton: {
-    width: 48,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  playButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  noAudio: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    backgroundColor: Colors.backgroundLight,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  noAudioText: {
-    fontSize: 13,
-    color: Colors.text.light,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
+  heroContainer: { height: 240, position: 'relative' },
+  heroImage: { width: '100%', height: '100%' },
+  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
+  heroContent: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between', paddingHorizontal: 20 },
+  backButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
+  heroInfo: { paddingBottom: 20 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, alignSelf: 'flex-start', marginBottom: 6 },
+  badgeText: { fontSize: 12, fontWeight: '700', color: '#FFD700', letterSpacing: 1 },
+  heroTitle: { fontSize: 26, fontWeight: '800', color: '#FFFFFF', lineHeight: 32, textShadowColor: 'rgba(0,0,0,0.4)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
+  contentContainer: { flex: 1 },
+  scrollContent: { flex: 1 },
+  scrollContentInner: { padding: 20, paddingBottom: 32 },
+  description: { fontSize: 16, color: Colors.text.primary, lineHeight: 28, fontWeight: '400' },
+  audioPlayer: { backgroundColor: Colors.white, paddingTop: 8, paddingHorizontal: 20, borderTopWidth: 1, borderTopColor: Colors.borderLight },
+  progressContainer: { height: 4, backgroundColor: '#E8E8E8', borderRadius: 2, overflow: 'hidden' },
+  progressBar: { height: '100%', backgroundColor: Colors.accent, borderRadius: 2 },
+  timeRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  timeText: { fontSize: 11, color: Colors.text.light },
+  controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28, paddingVertical: 8 },
+  controlButton: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
+  playButton: { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.accent, justifyContent: 'center', alignItems: 'center' },
+  noAudio: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, paddingHorizontal: 20, backgroundColor: Colors.white, borderTopWidth: 1, borderTopColor: Colors.borderLight },
+  noAudioText: { fontSize: 13, color: Colors.text.light },
 });

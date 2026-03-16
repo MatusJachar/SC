@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ImageBackground, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Image, Dimensions, ActivityIndicator, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { API_BASE_URL } from '../constants/api';
 
-const { width, height } = Dimensions.get('window');
-const HERO_IMAGE = 'https://images.pexels.com/photos/2832039/pexels-photo-2832039.jpeg?auto=compress&w=1200';
+const { width } = Dimensions.get('window');
+const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -22,65 +23,75 @@ export default function HomeScreen() {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={Colors.accent} />
-        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
 
   return (
-    <ImageBackground
-      source={{ uri: HERO_IMAGE }}
-      style={styles.container}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay} />
-      <View style={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}>
-        {/* Castle Icon */}
-        <View style={styles.iconContainer}>
-          <Ionicons name="business" size={56} color={Colors.accent} />
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}>
+      {/* Hero Image */}
+      <View style={styles.heroContainer}>
+        <Image source={{ uri: CASTLE_IMAGE }} style={styles.heroImage} resizeMode="cover" />
+        <View style={styles.heroOverlay} />
+        <View style={[styles.heroContent, { paddingTop: insets.top + 16 }]}>
+          <Text style={styles.heroTitle}>{'Spi\u0161 Castle'}</Text>
+          <Text style={styles.heroSubtitle}>Audio Tour Guide</Text>
         </View>
+      </View>
 
-        {/* Title */}
-        <Text style={styles.title}>{'Spi\u0161 Castle'}</Text>
-        <Text style={styles.subtitle}>Audio Tour Guide</Text>
-
+      {/* Content Section */}
+      <View style={styles.contentSection}>
         {/* Description */}
         <Text style={styles.description}>
-          Explore, Discover and Immerse yourself in the largest U.N.E.S.C.O castle complexes in Europe.
+          Explore, Discover and Immerse yourself in the largest U.N.E.S.C.O castle complex in Europe.
         </Text>
         <Text style={styles.subDescription}>
           Our audio guide will take you through centuries of history, architecture and legends.
         </Text>
 
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <View style={styles.statIcon}>
+              <Ionicons name="language" size={22} color={Colors.accent} />
+            </View>
+            <Text style={styles.statNumber}>{languages.length}</Text>
+            <Text style={styles.statLabel}>Languages</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <View style={styles.statIcon}>
+              <Ionicons name="location" size={22} color={Colors.accent} />
+            </View>
+            <Text style={styles.statNumber}>{tourStops.length}</Text>
+            <Text style={styles.statLabel}>Stops</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <View style={styles.statIcon}>
+              <Ionicons name="book" size={22} color={Colors.accent} />
+            </View>
+            <Text style={styles.statNumber}>{legends.length}</Text>
+            <Text style={styles.statLabel}>Legends</Text>
+          </View>
+        </View>
+
         {/* Start Tour Button */}
         <Pressable
-          style={({ pressed }) => [
-            styles.startButton,
-            pressed && styles.startButtonPressed,
-          ]}
+          style={({ pressed }) => [styles.startButton, pressed && styles.startButtonPressed]}
           onPress={() => router.push('/language')}
         >
           <Text style={styles.startButtonText}>Start Tour</Text>
-          <Ionicons name="arrow-forward" size={24} color={Colors.black} />
+          <Ionicons name="arrow-forward" size={22} color={Colors.white} />
         </Pressable>
 
-        {/* Bottom Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Ionicons name="language" size={24} color={Colors.accent} />
-            <Text style={styles.statText}>{languages.length} Languages</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons name="location" size={24} color={Colors.accent} />
-            <Text style={styles.statText}>{tourStops.length} Stops</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons name="cloud-offline" size={24} color={Colors.accent} />
-            <Text style={styles.statText}>Offline Mode</Text>
-          </View>
-        </View>
+        {/* Admin Link */}
+        <Pressable style={styles.adminLink} onPress={() => router.push('/admin')}>
+          <Ionicons name="settings-outline" size={18} color={Colors.text.light} />
+          <Text style={styles.adminLinkText}>Admin Panel</Text>
+        </Pressable>
       </View>
-    </ImageBackground>
+    </ScrollView>
   );
 }
 
@@ -89,89 +100,129 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  overlay: {
+  heroContainer: {
+    height: 320,
+    position: 'relative',
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(13, 13, 26, 0.65)',
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
-  content: {
-    flex: 1,
+  heroContent: {
+    position: 'absolute',
+    bottom: 24,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
   },
-  loadingText: {
-    color: Colors.text.secondary,
-    fontSize: 16,
-    marginTop: 16,
-  },
-  iconContainer: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 38,
+  heroTitle: {
+    fontSize: 36,
     fontWeight: '800',
-    color: Colors.white,
+    color: '#FFFFFF',
     textAlign: 'center',
-    letterSpacing: 1,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
-  subtitle: {
-    fontSize: 18,
-    color: Colors.accent,
+  heroSubtitle: {
+    fontSize: 16,
+    color: '#FFD700',
     textAlign: 'center',
     marginTop: 4,
     fontWeight: '600',
     letterSpacing: 2,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  contentSection: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   description: {
     fontSize: 17,
-    color: Colors.white,
+    color: Colors.text.primary,
     textAlign: 'center',
-    marginTop: 24,
     lineHeight: 26,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   subDescription: {
-    fontSize: 15,
-    color: Colors.accent,
+    fontSize: 14,
+    color: Colors.text.secondary,
     textAlign: 'center',
     marginTop: 12,
     lineHeight: 22,
     fontStyle: 'italic',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 28,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statIcon: {
+    marginBottom: 6,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.text.primary,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: Colors.text.light,
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: Colors.borderLight,
   },
   startButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.accent,
-    paddingHorizontal: 48,
     paddingVertical: 16,
-    borderRadius: 32,
-    marginTop: 40,
-    gap: 12,
+    borderRadius: 28,
+    marginTop: 28,
+    gap: 10,
   },
   startButtonPressed: {
     backgroundColor: Colors.accentDark,
     transform: [{ scale: 0.97 }],
   },
   startButtonText: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: Colors.black,
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.white,
   },
-  statsContainer: {
+  adminLink: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginTop: 48,
-    paddingHorizontal: 8,
-  },
-  statItem: {
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
     gap: 6,
   },
-  statText: {
-    color: Colors.white,
-    fontSize: 12,
-    fontWeight: '500',
+  adminLinkText: {
+    fontSize: 13,
+    color: Colors.text.light,
   },
 });

@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, ImageBackground, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-
-const HERO_IMAGE = 'https://images.pexels.com/photos/2832039/pexels-photo-2832039.jpeg?auto=compress&w=1200';
 
 interface TourType {
   id: string;
@@ -73,218 +71,107 @@ export default function TourSelectScreen() {
   };
 
   return (
-    <ImageBackground source={{ uri: HERO_IMAGE }} style={styles.container} resizeMode="cover">
-      <View style={styles.overlay} />
-      <View style={[styles.content, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }]}>
-        {/* Back */}
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom + 16 }]}>
+      {/* Header */}
+      <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.white} />
+          <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
         </Pressable>
+        <Text style={styles.headerTitle}>Choose Your Tour</Text>
+        <View style={{ width: 44 }} />
+      </View>
+      <Text style={styles.subtitle}>Select the experience that fits your time</Text>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Ionicons name="map" size={40} color={Colors.accent} />
-          <Text style={styles.title}>Choose Your Tour</Text>
-          <Text style={styles.subtitle}>Select the experience that fits your time</Text>
-        </View>
-
-        {/* Tour Cards */}
-        <ScrollView
-          style={styles.cardsContainer}
-          contentContainerStyle={styles.cardsContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {TOUR_TYPES.map((tour) => {
-            const isSelected = selectedTour === tour.id;
-            return (
-              <Pressable
-                key={tour.id}
-                style={[
-                  styles.tourCard,
-                  isSelected && styles.tourCardSelected,
-                ]}
-                onPress={() => setSelectedTour(tour.id)}
-              >
-                {/* Icon + Selected indicator */}
-                <View style={styles.cardHeader}>
-                  <View style={styles.iconCircle}>
-                    <Ionicons name={tour.icon} size={24} color={Colors.black} />
-                  </View>
-                  {isSelected && (
-                    <Ionicons name="checkmark-circle" size={28} color={Colors.success} />
-                  )}
+      {/* Tour Cards */}
+      <ScrollView
+        style={styles.cardsContainer}
+        contentContainerStyle={styles.cardsContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {TOUR_TYPES.map((tour) => {
+          const isSelected = selectedTour === tour.id;
+          return (
+            <Pressable
+              key={tour.id}
+              style={[styles.tourCard, isSelected && styles.tourCardSelected]}
+              onPress={() => setSelectedTour(tour.id)}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name={tour.icon} size={22} color={Colors.white} />
                 </View>
-
-                {/* Info */}
-                <Text style={styles.tourName}>{tour.name}</Text>
-                <Text style={styles.tourDescription}>{tour.description}</Text>
-
-                {/* Stats */}
-                <View style={styles.tourStats}>
-                  <View style={styles.tourStat}>
-                    <Ionicons name="location" size={16} color={Colors.accent} />
-                    <Text style={styles.tourStatText}>{tour.stops} stops</Text>
-                  </View>
-                  <View style={styles.tourStat}>
-                    <Ionicons name="time" size={16} color={Colors.accent} />
-                    <Text style={styles.tourStatText}>{tour.duration}</Text>
-                  </View>
+                {isSelected && (
+                  <Ionicons name="checkmark-circle" size={26} color={Colors.success} />
+                )}
+              </View>
+              <Text style={styles.tourName}>{tour.name}</Text>
+              <Text style={styles.tourDescription}>{tour.description}</Text>
+              <View style={styles.tourStats}>
+                <View style={styles.tourStat}>
+                  <Ionicons name="location" size={14} color={Colors.accent} />
+                  <Text style={styles.tourStatText}>{tour.stops} stops</Text>
                 </View>
-
-                {/* Includes */}
-                <View style={styles.includesSection}>
-                  <Text style={styles.includesTitle}>INCLUDES:</Text>
-                  {tour.includes.map((item, idx) => (
-                    <Text key={idx} style={styles.includesItem}>{'\u2022'} {item}</Text>
-                  ))}
+                <View style={styles.tourStat}>
+                  <Ionicons name="time" size={14} color={Colors.accent} />
+                  <Text style={styles.tourStatText}>{tour.duration}</Text>
                 </View>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+              </View>
+              <View style={styles.includesSection}>
+                {tour.includes.map((item, idx) => (
+                  <Text key={idx} style={styles.includesItem}>{'\u2022'} {item}</Text>
+                ))}
+              </View>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
-        {/* Continue Button */}
+      {/* Continue Button */}
+      <View style={styles.bottomBar}>
         <Pressable
-          style={({ pressed }) => [
-            styles.continueButton,
-            pressed && styles.continueButtonPressed,
-          ]}
+          style={({ pressed }) => [styles.continueButton, pressed && styles.continueButtonPressed]}
           onPress={handleContinue}
         >
           <Text style={styles.continueButtonText}>Continue</Text>
-          <Ionicons name="arrow-forward" size={24} color={Colors.black} />
+          <Ionicons name="arrow-forward" size={22} color={Colors.white} />
         </Pressable>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(13, 13, 26, 0.75)',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: Colors.accent,
-    marginTop: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginTop: 4,
-  },
-  cardsContainer: {
-    flex: 1,
-    marginTop: 12,
-  },
-  cardsContent: {
-    gap: 16,
-    paddingBottom: 16,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
+  backButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 20, fontWeight: '700', color: Colors.text.primary },
+  subtitle: { textAlign: 'center', fontSize: 14, color: Colors.text.light, marginBottom: 8 },
+  cardsContainer: { flex: 1 },
+  cardsContent: { paddingHorizontal: 16, gap: 12, paddingBottom: 16 },
   tourCard: {
-    backgroundColor: 'rgba(22, 33, 62, 0.9)',
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  tourCardSelected: {
-    borderColor: Colors.accent,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tourName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.white,
-  },
-  tourDescription: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-    marginTop: 4,
-  },
-  tourStats: {
-    flexDirection: 'row',
-    gap: 24,
-    marginTop: 12,
-  },
-  tourStat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  tourStatText: {
-    color: Colors.text.secondary,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  includesSection: {
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    paddingTop: 12,
-  },
-  includesTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: Colors.accent,
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  includesItem: {
-    fontSize: 13,
-    color: Colors.text.secondary,
-    lineHeight: 20,
-  },
-  continueButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.accent,
-    paddingVertical: 16,
-    borderRadius: 32,
-    gap: 12,
-    marginTop: 8,
-  },
-  continueButtonPressed: {
-    backgroundColor: Colors.accentDark,
-    transform: [{ scale: 0.97 }],
-  },
-  continueButtonText: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: Colors.black,
-  },
+  tourCardSelected: { borderColor: Colors.accent },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  iconCircle: { width: 42, height: 42, borderRadius: 21, backgroundColor: Colors.accent, justifyContent: 'center', alignItems: 'center' },
+  tourName: { fontSize: 20, fontWeight: '700', color: Colors.text.primary },
+  tourDescription: { fontSize: 13, color: Colors.text.secondary, marginTop: 4 },
+  tourStats: { flexDirection: 'row', gap: 20, marginTop: 10 },
+  tourStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  tourStatText: { color: Colors.text.secondary, fontSize: 13, fontWeight: '600' },
+  includesSection: { marginTop: 12, borderTopWidth: 1, borderTopColor: Colors.borderLight, paddingTop: 10 },
+  includesItem: { fontSize: 13, color: Colors.text.secondary, lineHeight: 20 },
+  bottomBar: { paddingHorizontal: 16, paddingTop: 8 },
+  continueButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.accent, paddingVertical: 16, borderRadius: 28, gap: 10 },
+  continueButtonPressed: { backgroundColor: Colors.accentDark, transform: [{ scale: 0.97 }] },
+  continueButtonText: { fontSize: 18, fontWeight: '700', color: Colors.white },
 });
