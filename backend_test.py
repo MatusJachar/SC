@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # Get backend URL from environment
-BASE_URL = "https://audio-sprievodca.preview.emergentagent.com/api"
+BASE_URL = "https://spis-castle-guide-1.preview.emergentagent.com/api"
 
 class CastleAudioGuideTests:
     def __init__(self):
