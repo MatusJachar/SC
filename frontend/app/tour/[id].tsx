@@ -1,231 +1,149 @@
-import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-  ImageBackground,
-} from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, ImageBackground, Dimensions, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '../../constants/colors';
 import { useApp } from '../../context/AppContext';
-import { ProgressDots } from '../../components/ProgressDots';
-import { AudioPlayer } from '../../components/AudioPlayer';
+import { Colors } from '../../constants/colors';
+import { Ionicons } from '@expo/vector-icons';
 
-const { height, width } = Dimensions.get('window');
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1660544773706-2e41ec6c45b8?w=1200&q=80';
 
-export default function TourStopDetailScreen() {
+export default function TourDetailScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const {
     tourStops,
+    legends,
     selectedLanguage,
-    playAudio,
-    currentStopId,
     isPlaying,
+    currentStopId,
+    playbackPosition,
+    playbackDuration,
+    playAudio,
+    pauseAudio,
+    resumeAudio,
+    stopAudio,
+    seekAudio,
+    skipForward,
+    skipBackward,
   } = useApp();
 
-  const sortedStops = useMemo(() => 
-    tourStops.filter(s => s.is_active).sort((a, b) => a.stop_number - b.stop_number),
-    [tourStops]
-  );
-
-  const currentStop = useMemo(() => 
-    sortedStops.find(s => s.id === id),
-    [sortedStops, id]
-  );
-
-  const currentIndex = useMemo(() => 
-    sortedStops.findIndex(s => s.id === id),
-    [sortedStops, id]
-  );
+  const allStops = useMemo(() => [...tourStops, ...legends], [tourStops, legends]);
+  const stop = useMemo(() => allStops.find(s => s.id === id), [allStops, id]);
 
   const translation = useMemo(() => {
-    if (!currentStop) return null;
-    return currentStop.translations.find(t => t.language_code === selectedLanguage) || currentStop.translations[0];
-  }, [currentStop, selectedLanguage]);
+    if (!stop) return null;
+    return stop.translations.find(t => t.language_code === selectedLanguage)
+      || stop.translations.find(t => t.language_code === 'en')
+      || stop.translations[0];
+  }, [stop, selectedLanguage]);
 
-  if (!currentStop || !translation) {
+  const isCurrentStop = currentStopId === id;
+  const hasAudio = !!translation?.audio_url;
+
+  const formatTime = (ms: number) => {
+    const totalSec = Math.floor(ms / 1000);
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const progress = playbackDuration > 0 ? (playbackPosition / playbackDuration) : 0;
+
+  const handlePlayPause = async () => {
+    if (!hasAudio || !translation?.audio_url) return;
+    if (isCurrentStop && isPlaying) {
+      await pauseAudio();
+    } else if (isCurrentStop) {
+      await resumeAudio();
+    } else {
+      await playAudio(id || '', translation.audio_url);
+    }
+  };
+
+  if (!stop) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Stop not found</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.errorLink}>Go back</Text>
-        </TouchableOpacity>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
   }
 
-  const handlePlayAudio = () => {
-    if (translation.audio_url) {
-      playAudio(currentStop.id, translation.audio_url);
-    }
-  };
-
-  const handleDotPress = (index: number) => {
-    const stop = sortedStops[index];
-    if (stop) {
-      router.replace(`/tour/${stop.id}`);
-    }
-  };
-
-  const goToPrevious = () => {
-    if (currentIndex > 0) {
-      const prevStop = sortedStops[currentIndex - 1];
-      router.replace(`/tour/${prevStop.id}`);
-    }
-  };
-
-  const goToNext = () => {
-    if (currentIndex < sortedStops.length - 1) {
-      const nextStop = sortedStops[currentIndex + 1];
-      router.replace(`/tour/${nextStop.id}`);
-    }
-  };
-
-  const isAudioPlaying = currentStopId === currentStop.id && isPlaying;
-  const hasAudio = !!translation.audio_url;
+  const isLegend = stop.stop_type === 'legend';
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Hero Image */}
-        <ImageBackground
-          source={{ uri: currentStop.image_url }}
-          style={styles.heroImage}
-          resizeMode="cover"
-        >
-          <LinearGradient
-            colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.7)']}
-            style={styles.heroGradient}
-          >
-            {/* Top controls */}
-            <View style={[styles.topControls, { marginTop: insets.top }]}>
-              <TouchableOpacity
-                style={styles.glassButton}
-                onPress={() => router.back()}
-              >
-                <Ionicons name="arrow-back" size={24} color={Colors.white} />
-              </TouchableOpacity>
-              
-              <View style={styles.rightControls}>
-                <View style={styles.counterBadge}>
-                  <Text style={styles.counterText}>
-                    {currentStop.stop_number} / {sortedStops.length}
-                  </Text>
-                </View>
+      {/* Hero Image */}
+      <ImageBackground source={{ uri: HERO_IMAGE }} style={styles.heroImage} resizeMode="cover">
+        <View style={styles.heroOverlay} />
+        <View style={[styles.heroContent, { paddingTop: insets.top + 8 }]}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color={Colors.white} />
+          </Pressable>
+          <View style={styles.heroInfo}>
+            {isLegend ? (
+              <View style={styles.legendBadge}>
+                <Ionicons name="book" size={16} color={Colors.accent} />
+                <Text style={styles.legendBadgeText}>Legend</Text>
               </View>
-            </View>
-
-            {/* Title on image */}
-            <View style={styles.heroTitleContainer}>
-              <Text style={styles.heroTitle}>{translation.title}</Text>
-            </View>
-          </LinearGradient>
-        </ImageBackground>
-
-        {/* Progress dots */}
-        <ProgressDots
-          total={sortedStops.length}
-          current={currentIndex}
-          onDotPress={handleDotPress}
-        />
-
-        {/* Content */}
-        <View style={styles.contentSection}>
-          {/* Play Audio button */}
-          <TouchableOpacity
-            style={[styles.playButton, !hasAudio && styles.playButtonDisabled]}
-            onPress={handlePlayAudio}
-            activeOpacity={0.9}
-            disabled={!hasAudio}
-          >
-            <Ionicons
-              name={isAudioPlaying ? 'pause' : 'play'}
-              size={24}
-              color={Colors.white}
-            />
-            <Text style={styles.playButtonText}>
-              {!hasAudio ? 'NO AUDIO YET' : isAudioPlaying ? 'PAUSE AUDIO' : 'PLAY AUDIO'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* About this stop */}
-          <View style={styles.aboutSection}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.goldLine} />
-              <Text style={styles.sectionTitle}>ABOUT THIS STOP</Text>
-            </View>
-            <Text style={styles.description}>{translation.description}</Text>
-          </View>
-
-          {/* Navigation buttons */}
-          <View style={styles.navButtons}>
-            <TouchableOpacity
-              style={[
-                styles.navButton,
-                styles.prevButton,
-                currentIndex === 0 && styles.disabledButton,
-              ]}
-              onPress={goToPrevious}
-              disabled={currentIndex === 0}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={20}
-                color={currentIndex === 0 ? Colors.stone[400] : Colors.accent}
-              />
-              <Text style={[
-                styles.navButtonText,
-                styles.prevButtonText,
-                currentIndex === 0 && styles.disabledText,
-              ]}>
-                Previous
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.navButton,
-                styles.nextButton,
-                currentIndex === sortedStops.length - 1 && styles.disabledNextButton,
-              ]}
-              onPress={goToNext}
-              disabled={currentIndex === sortedStops.length - 1}
-            >
-              <Text style={[
-                styles.navButtonText,
-                styles.nextButtonText,
-                currentIndex === sortedStops.length - 1 && styles.disabledNextText,
-              ]}>
-                Next
-              </Text>
-              <Ionicons
-                name="arrow-forward"
-                size={20}
-                color={currentIndex === sortedStops.length - 1 ? Colors.stone[400] : Colors.white}
-              />
-            </TouchableOpacity>
+            ) : (
+              <View style={styles.stopBadge}>
+                <Text style={styles.stopBadgeText}>Stop {stop.stop_number}</Text>
+              </View>
+            )}
+            <Text style={styles.heroTitle}>{translation?.title || 'Tour Stop'}</Text>
           </View>
         </View>
-      </ScrollView>
+      </ImageBackground>
 
-      {/* Audio Player */}
-      {currentStopId && (
-        <AudioPlayer
-          stopTitle={translation.title}
-          stopNumber={currentStop.stop_number}
-        />
-      )}
+      {/* Content */}
+      <View style={styles.contentContainer}>
+        <ScrollView
+          style={styles.scrollContent}
+          contentContainerStyle={styles.scrollContentInner}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.description}>{translation?.description || ''}</Text>
+        </ScrollView>
+
+        {/* Audio Player */}
+        {hasAudio && (
+          <View style={[styles.audioPlayer, { paddingBottom: insets.bottom + 12 }]}>
+            {/* Progress Bar */}
+            <View style={styles.progressContainer}>
+              <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+            </View>
+            <View style={styles.timeRow}>
+              <Text style={styles.timeText}>{isCurrentStop ? formatTime(playbackPosition) : '0:00'}</Text>
+              <Text style={styles.timeText}>{isCurrentStop ? formatTime(playbackDuration) : '--:--'}</Text>
+            </View>
+            {/* Controls */}
+            <View style={styles.controls}>
+              <Pressable onPress={skipBackward} style={styles.controlButton}>
+                <Ionicons name="play-back" size={28} color={Colors.white} />
+              </Pressable>
+              <Pressable onPress={handlePlayPause} style={styles.playButton}>
+                <Ionicons
+                  name={isCurrentStop && isPlaying ? 'pause' : 'play'}
+                  size={36}
+                  color={Colors.black}
+                />
+              </Pressable>
+              <Pressable onPress={skipForward} style={styles.controlButton}>
+                <Ionicons name="play-forward" size={28} color={Colors.white} />
+              </Pressable>
+            </View>
+          </View>
+        )}
+
+        {!hasAudio && (
+          <View style={[styles.noAudio, { paddingBottom: insets.bottom + 12 }]}>
+            <Ionicons name="volume-mute" size={24} color={Colors.text.light} />
+            <Text style={styles.noAudioText}>Audio available via admin panel upload</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -235,166 +153,141 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 180,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-  },
-  errorText: {
-    fontSize: 18,
-    fontFamily: 'Lato_400Regular',
-    color: Colors.text.primary,
-    marginBottom: 16,
-  },
-  errorLink: {
-    fontSize: 16,
-    fontFamily: 'Lato_700Bold',
-    color: Colors.accent,
-  },
   heroImage: {
-    height: height * 0.45,
-    width: '100%',
+    height: 260,
   },
-  heroGradient: {
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(13, 13, 26, 0.5)',
+  },
+  heroContent: {
     flex: 1,
+    paddingHorizontal: 20,
     justifyContent: 'space-between',
-    padding: 16,
   },
-  topControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  glassButton: {
+  backButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  rightControls: {
-    flexDirection: 'row',
-    gap: 8,
+  heroInfo: {
+    paddingBottom: 20,
   },
-  counterBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingVertical: 8,
+  stopBadge: {
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
     paddingHorizontal: 12,
-    borderRadius: 16,
-  },
-  counterText: {
-    fontSize: 14,
-    fontFamily: 'Lato_700Bold',
-    color: Colors.white,
-  },
-  heroTitleContainer: {
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
     marginBottom: 8,
   },
-  heroTitle: {
-    fontSize: 26,
-    fontFamily: 'Cinzel_700Bold',
-    color: Colors.white,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  contentSection: {
-    padding: 24,
-  },
-  playButton: {
-    backgroundColor: Colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 12,
-    marginBottom: 24,
-  },
-  playButtonDisabled: {
-    backgroundColor: Colors.stone[400],
-  },
-  playButtonText: {
-    fontSize: 14,
-    fontFamily: 'Cinzel_700Bold',
-    color: Colors.white,
-    letterSpacing: 2,
-  },
-  aboutSection: {
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 12,
-  },
-  goldLine: {
-    width: 4,
-    height: 24,
-    backgroundColor: Colors.accent,
-    borderRadius: 2,
-  },
-  sectionTitle: {
+  stopBadgeText: {
     fontSize: 12,
-    fontFamily: 'Lato_700Bold',
+    fontWeight: '700',
     color: Colors.accent,
-    letterSpacing: 2,
+    letterSpacing: 1,
+  },
+  legendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  legendBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.accent,
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: Colors.white,
+    lineHeight: 34,
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentInner: {
+    padding: 20,
+    paddingBottom: 32,
   },
   description: {
     fontSize: 16,
-    fontFamily: 'Lato_400Regular',
     color: Colors.text.secondary,
     lineHeight: 26,
   },
-  navButtons: {
-    flexDirection: 'row',
-    gap: 12,
+  audioPlayer: {
+    backgroundColor: Colors.backgroundLight,
+    paddingTop: 8,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
   },
-  navButton: {
-    flex: 1,
+  progressContainer: {
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: Colors.accent,
+    borderRadius: 2,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  timeText: {
+    fontSize: 11,
+    color: Colors.text.light,
+  },
+  controls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 8,
+    gap: 32,
+    paddingVertical: 8,
   },
-  prevButton: {
-    backgroundColor: Colors.white,
-    borderWidth: 2,
-    borderColor: Colors.accent,
+  controlButton: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  nextButton: {
+  playButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: Colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  navButtonText: {
-    fontSize: 14,
-    fontFamily: 'Lato_700Bold',
+  noAudio: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: Colors.backgroundLight,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
   },
-  prevButtonText: {
-    color: Colors.accent,
-  },
-  nextButtonText: {
-    color: Colors.white,
-  },
-  disabledButton: {
-    borderColor: Colors.stone[300],
-    backgroundColor: Colors.stone[100],
-  },
-  disabledNextButton: {
-    backgroundColor: Colors.stone[300],
-  },
-  disabledText: {
-    color: Colors.stone[400],
-  },
-  disabledNextText: {
-    color: Colors.stone[400],
+  noAudioText: {
+    fontSize: 13,
+    color: Colors.text.light,
   },
 });

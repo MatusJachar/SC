@@ -203,6 +203,55 @@ class SiteSettingsUpdate(BaseModel):
     enable_vr_mode: Optional[bool] = None
     admin_password: Optional[str] = None
 
+# Souvenir Shop Models
+class ShopProduct(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str = ""
+    price: float = 0.0
+    currency: str = "EUR"
+    icon: str = "gift"
+    image_url: Optional[str] = None
+    is_active: bool = True
+    order: int = 0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ShopProductCreate(BaseModel):
+    name: str
+    description: str = ""
+    price: float = 0.0
+    currency: str = "EUR"
+    icon: str = "gift"
+    image_url: Optional[str] = None
+    is_active: bool = True
+    order: int = 0
+
+class ShopProductUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    currency: Optional[str] = None
+    icon: Optional[str] = None
+    image_url: Optional[str] = None
+    is_active: Optional[bool] = None
+    order: Optional[int] = None
+
+class ShopSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default="shop")
+    shop_name: str = "Castle Gift Shop"
+    shop_description: str = "Visit the shop located at the castle entrance. Take home a piece of medieval history!"
+    opening_hours: str = "Daily 9:00 - 17:00 (May - October)\nDaily 10:00 - 15:00 (November - April)"
+    location: str = "At the castle entrance"
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ShopSettingsUpdate(BaseModel):
+    shop_name: Optional[str] = None
+    shop_description: Optional[str] = None
+    opening_hours: Optional[str] = None
+    location: Optional[str] = None
+
 # ==================== AUTH HELPERS ====================
 
 def hash_password(password: str) -> str:
@@ -809,6 +858,74 @@ async def serve_ambient(filename: str, request: Request):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path, media_type="audio/mpeg")
+
+# ==================== SOUVENIR SHOP API ====================
+
+@api_router.get("/shop/products")
+async def get_shop_products():
+    """Get all active shop products"""
+    products = await db.shop_products.find({"is_active": True}).sort("order", 1).to_list(100)
+    for p in products:
+        p.pop('_id', None)
+    return products
+
+@api_router.get("/shop/settings")
+async def get_shop_settings():
+    """Get shop settings"""
+    settings = await db.shop_settings.find_one({"id": "shop"})
+    if not settings:
+        return {"id": "shop", "shop_name": "Castle Gift Shop", "shop_description": "Visit the shop located at the castle entrance.", "opening_hours": "Daily 9:00 - 17:00", "location": "At the castle entrance"}
+    settings.pop('_id', None)
+    return settings
+
+@api_router.get("/admin/shop/products")
+async def admin_get_shop_products(current_admin: dict = Depends(get_current_admin)):
+    products = await db.shop_products.find({}).sort("order", 1).to_list(100)
+    for p in products:
+        p.pop('_id', None)
+    return products
+
+@api_router.post("/admin/shop/products")
+async def admin_create_shop_product(data: ShopProductCreate, current_admin: dict = Depends(get_current_admin)):
+    product = ShopProduct(**data.model_dump())
+    await db.shop_products.insert_one(product.model_dump())
+    return product.model_dump()
+
+@api_router.put("/admin/shop/products/{product_id}")
+async def admin_update_shop_product(product_id: str, data: ShopProductUpdate, current_admin: dict = Depends(get_current_admin)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    result = await db.shop_products.update_one({"id": product_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    product = await db.shop_products.find_one({"id": product_id})
+    product.pop('_id', None)
+    return product
+
+@api_router.delete("/admin/shop/products/{product_id}")
+async def admin_delete_shop_product(product_id: str, current_admin: dict = Depends(get_current_admin)):
+    result = await db.shop_products.delete_one({"id": product_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"status": "deleted"}
+
+@api_router.get("/admin/shop/settings")
+async def admin_get_shop_settings(current_admin: dict = Depends(get_current_admin)):
+    settings = await db.shop_settings.find_one({"id": "shop"})
+    if not settings:
+        return ShopSettings().model_dump()
+    settings.pop('_id', None)
+    return settings
+
+@api_router.put("/admin/shop/settings")
+async def admin_update_shop_settings(data: ShopSettingsUpdate, current_admin: dict = Depends(get_current_admin)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    result = await db.shop_settings.update_one({"id": "shop"}, {"$set": update_data}, upsert=True)
+    settings = await db.shop_settings.find_one({"id": "shop"})
+    settings.pop('_id', None)
+    return settings
 
 # ==================== SEED DATA ====================
 

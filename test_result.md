@@ -333,3 +333,39 @@ agent_communication:
     
     - agent: "testing"
       message: "ADMIN PANEL TESTING COMPLETED - All 19 admin panel tests PASSED (100% success rate)! ✅ Admin authentication working with credentials {'username':'admin','password':'admin123'}. All CRUD operations functional: tour stops management (16 stops), site settings updates, multilingual site info management (9 languages), languages with flag emojis, QR codes generation. Mobile content management system fully operational and production-ready."
+
+  - task: "Shop Products API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "New endpoints added: GET /api/shop/products, GET /api/shop/settings, CRUD admin endpoints for products and shop settings"
+
+  - task: "Admin Shop Management"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Admin CRUD for shop products and shop settings. Endpoints: /api/admin/shop/products, /api/admin/shop/settings"
+
+  - task: "Data Import - Tour Stops with Real Content"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/import_data.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Imported 13 tour stops + 4 legends with real content in 9 languages from tour_stops_import.json. Audio available for stops 1-7 in 5 languages (sk,en,de,pl,hu)."
