@@ -23,7 +23,6 @@ export default function TourStopListScreen() {
   const insets = useSafeAreaInsets();
   const { tourStops, selectedLanguage, currentStopId, isPlaying, loadData, isLoading } = useApp();
 
-  // Load data if not already loaded
   React.useEffect(() => {
     if (tourStops.length === 0) {
       loadData();
@@ -39,9 +38,14 @@ export default function TourStopListScreen() {
     return `${minutes} min`;
   };
 
+  const activeStops = tourStops
+    .filter(s => s.is_active && s.stop_type === 'tour')
+    .sort((a, b) => a.stop_number - b.stop_number);
+
   const renderStop = ({ item }: { item: TourStop }) => {
     const translation = getTranslation(item);
     const isCurrentlyPlaying = currentStopId === item.id && isPlaying;
+    const hasAudio = !!translation?.audio_url;
 
     return (
       <TouchableOpacity
@@ -51,7 +55,7 @@ export default function TourStopListScreen() {
       >
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: item.image_url }}
+            source={{ uri: item.image_url || 'https://images.unsplash.com/photo-1599946347371-68eb71b16afc?w=400' }}
             style={styles.stopImage}
             contentFit="cover"
           />
@@ -60,7 +64,7 @@ export default function TourStopListScreen() {
           </View>
           {isCurrentlyPlaying && (
             <View style={styles.playingIndicator}>
-              <Ionicons name="musical-notes" size={16} color={Colors.white} />
+              <Ionicons name="musical-notes" size={14} color={Colors.white} />
             </View>
           )}
         </View>
@@ -68,12 +72,17 @@ export default function TourStopListScreen() {
           <Text style={styles.stopTitle} numberOfLines={2}>
             {translation?.title || 'Untitled'}
           </Text>
+          {translation?.short_description && (
+            <Text style={styles.stopShortDesc} numberOfLines={1}>
+              {translation.short_description}
+            </Text>
+          )}
           <View style={styles.stopMeta}>
             <View style={styles.metaItem}>
               <Ionicons name="time-outline" size={14} color={Colors.text.light} />
               <Text style={styles.metaText}>{formatDuration(item.duration_seconds)}</Text>
             </View>
-            {translation?.audio_url && (
+            {hasAudio && (
               <View style={styles.metaItem}>
                 <Ionicons name="headset-outline" size={14} color={Colors.accent} />
                 <Text style={[styles.metaText, { color: Colors.accent }]}>Audio</Text>
@@ -81,18 +90,18 @@ export default function TourStopListScreen() {
             )}
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={24} color={Colors.stone[400]} />
+        <Ionicons name="chevron-forward" size={22} color={Colors.stone[400]} />
       </TouchableOpacity>
     );
   };
-
-  const activeStops = tourStops.filter(s => s.is_active).sort((a, b) => a.stop_number - b.stop_number);
 
   if (isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={Colors.accent} />
-        <Text style={{ marginTop: 16, color: Colors.text.secondary }}>Loading tour stops...</Text>
+        <Text style={{ marginTop: 16, color: Colors.text.secondary, fontFamily: 'Lato_400Regular' }}>
+          Loading tour stops...
+        </Text>
       </View>
     );
   }
@@ -107,8 +116,13 @@ export default function TourStopListScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tour Stops</Text>
-        <View style={styles.placeholder} />
+        <View style={styles.headerCenter}>
+          <Ionicons name="headset" size={20} color={Colors.accent} />
+          <Text style={styles.headerTitle}>Tour Stops</Text>
+        </View>
+        <View style={styles.countBadge}>
+          <Text style={styles.countText}>{activeStops.length}</Text>
+        </View>
       </View>
 
       {/* Tour stops list */}
@@ -120,11 +134,9 @@ export default function TourStopListScreen() {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={() => (
-          <View style={{ padding: 40, alignItems: 'center' }}>
+          <View style={styles.emptyContainer}>
             <Ionicons name="map-outline" size={48} color={Colors.stone[400]} />
-            <Text style={{ marginTop: 16, color: Colors.text.light, textAlign: 'center' }}>
-              No tour stops available yet
-            </Text>
+            <Text style={styles.emptyText}>No tour stops available yet</Text>
           </View>
         )}
       />
@@ -147,20 +159,33 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.stone[200],
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: Colors.stone[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Cinzel_700Bold',
     color: Colors.text.primary,
   },
-  placeholder: {
-    width: 44,
+  countBadge: {
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  countText: {
+    fontSize: 13,
+    fontFamily: 'Lato_700Bold',
+    color: Colors.white,
   },
   listContent: {
     padding: 16,
@@ -169,7 +194,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.white,
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 12,
     borderWidth: 1,
     borderColor: Colors.stone[200],
@@ -178,17 +203,17 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   stopImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
+    width: 75,
+    height: 75,
+    borderRadius: 10,
   },
   stopNumberBadge: {
     position: 'absolute',
     top: -6,
     left: -6,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: Colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
@@ -196,7 +221,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.white,
   },
   stopNumberText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Lato_700Bold',
     color: Colors.white,
   },
@@ -204,9 +229,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 4,
     right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: Colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
@@ -216,14 +241,20 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   stopTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Lato_700Bold',
     color: Colors.text.primary,
-    marginBottom: 8,
+    marginBottom: 2,
+  },
+  stopShortDesc: {
+    fontSize: 12,
+    fontFamily: 'Lato_400Regular',
+    color: Colors.text.light,
+    marginBottom: 6,
   },
   stopMeta: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 14,
   },
   metaItem: {
     flexDirection: 'row',
@@ -236,6 +267,16 @@ const styles = StyleSheet.create({
     color: Colors.text.light,
   },
   separator: {
-    height: 12,
+    height: 10,
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    marginTop: 16,
+    color: Colors.text.light,
+    textAlign: 'center',
+    fontFamily: 'Lato_400Regular',
   },
 });

@@ -115,9 +115,9 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "GET /api/health endpoint returns healthy status successfully with timestamp"
+          comment: "GET /api/health endpoint returns healthy status successfully with timestamp - ULTIMATE version confirmed working"
 
-  - task: "Languages API Endpoint"
+  - task: "Languages API Endpoint (9 Languages)"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -127,9 +127,9 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "GET /api/languages returns exactly 5 languages (Slovak, English, German, Polish, Hungarian) with correct structure including id, code, name, native_name, flag_emoji, is_active, and order fields"
+          comment: "GET /api/languages returns exactly 9 languages (SK, EN, DE, PL, HU, FR, ES, RU, ZH) with correct structure including flag emojis 🇸🇰🇬🇧🇩🇪🇵🇱🇭🇺🇫🇷🇪🇸🇷🇺🇨🇳 and all required fields"
 
-  - task: "Tour Stops API Endpoint"
+  - task: "Tour Stops API Endpoint (12 Tour + 4 Legends)"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -139,19 +139,19 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "GET /api/tour-stops returns 7 tour stops numbered 1-7, each with translations in all 5 languages and proper duration_seconds values (180-250 seconds range)"
+          comment: "GET /api/tour-stops returns total 16+ stops correctly split: 12 tour stops (numbered 1-12) + 4 legends (numbered 101-104). All stops have translations in 9 languages and proper duration_seconds values. Filtering by stop_type works correctly"
 
-  - task: "Individual Tour Stop Endpoint"
+  - task: "Tour Stops Filtering"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: false
     status_history:
         - working: true
           agent: "testing"
-          comment: "GET /api/tour-stops/{id} successfully retrieves individual tour stop with complete structure including translations and metadata"
+          comment: "GET /api/tour-stops?stop_type=tour returns exactly 12 tour stops, GET /api/tour-stops?stop_type=legend returns exactly 4 legends. Filtering works perfectly"
 
   - task: "Site Settings API Endpoint"
     implemented: true
@@ -165,7 +165,7 @@ backend:
           agent: "testing"
           comment: "GET /api/site-settings returns site settings with site_name 'Spišský Hrad' and all required fields including colors, descriptions, and branding"
 
-  - task: "Site Info Slovak Language"
+  - task: "Site Info Multilingual (9 Languages)"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -175,19 +175,7 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "GET /api/site-info?language=sk returns Slovak site information with correct language_code, title, and description"
-
-  - task: "Site Info English Language"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/site-info?language=en returns English site information with correct language_code, title, and description"
+          comment: "GET /api/site-info?language={sk|en|zh|de|pl|hu|fr|es|ru} returns correct site information for all 9 languages with proper titles and descriptions. Slovak: 'Vitajte na Spišskom hrade', English: 'Welcome to Spiš Castle', Chinese: '斯皮什城堡'"
 
   - task: "Offline Package API Endpoint"
     implemented: true
@@ -199,9 +187,45 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "GET /api/offline-package returns complete package with all 5 languages, 7 tour stops, site info for all languages, version, and generation timestamp"
+          comment: "GET /api/offline-package returns complete package with all 9 languages, 16+ tour stops, site info for all languages, version timestamp, and generation timestamp. Perfect for offline functionality"
 
-  - task: "Database Seeding"
+  - task: "QR Code Generation"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/qr/code/{qr_code_id} generates PNG QR codes successfully. All tour stops and legends have unique QR code IDs. Returns proper image/png content-type. Physical QR code markers can be generated"
+
+  - task: "Audio URLs for Stops 1-7"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "All tour stops 1-7 have audio URLs in multiple languages (format: /api/uploads/audio/stop{N}_{lang}.mp3). Audio file references properly configured for guided tour functionality"
+
+  - task: "Complete 9-Language Translations"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "All tour stops and legends have complete translations in all 9 languages (SK, EN, DE, PL, HU, FR, ES, RU, ZH). Each translation includes title, descriptions, and audio URLs where applicable. Full multilingual support achieved"
+
+  - task: "Database Seeding (ULTIMATE Version)"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -211,23 +235,26 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "POST /api/seed-data successfully populates database with castle tour data including languages, tour stops, site info, and settings"
+          comment: "POST /api/seed-data successfully populates database with ULTIMATE castle tour data: 9 languages, 12 tour stops + 4 legends, multilingual site info, and settings. Seeding produces 144 content pieces (16 stops × 9 languages)"
 
 frontend:
   # Frontend testing not performed - only backend testing requested
 
 metadata:
   created_by: "testing_agent"
-  version: "1.0"
-  test_sequence: 1
+  version: "2.0"
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus: []
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "completed"
 
 agent_communication:
     - agent: "testing"
       message: "Comprehensive backend API testing completed successfully. All 37 test cases passed with 100% success rate. Castle Audio Guide backend is fully functional with proper data seeding, all required endpoints working correctly, and complete multilingual support for 5 languages (Slovak, English, German, Polish, Hungarian). All tour stops (1-7) have proper translations and durations. Site settings correctly configured for Spišský Hrad. Offline package functionality working perfectly. Backend is production-ready."
+    
+    - agent: "testing"
+      message: "ULTIMATE TESTING COMPLETED - All 63 comprehensive tests PASSED (100% success rate)! ✅ Backend fully meets all review requirements: 9 languages (SK, EN, DE, PL, HU, FR, ES, RU, ZH) with flag emojis, 12 tour stops + 4 legends properly numbered, QR code generation working, all translations complete in 9 languages, audio URLs present for stops 1-7, site settings for Spišský Hrad, multilingual site info, complete offline package. System is production-ready and exceeds specifications."

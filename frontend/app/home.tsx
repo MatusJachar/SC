@@ -20,7 +20,7 @@ const { height, width } = Dimensions.get('window');
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { siteSettings, siteInfo, tourStops, selectedLanguage } = useApp();
+  const { siteSettings, siteInfo, tourStops, legends, selectedLanguage } = useApp();
 
   // Calculate total duration
   const totalDuration = tourStops.reduce((sum, stop) => sum + stop.duration_seconds, 0);
@@ -39,7 +39,7 @@ export default function HomeScreen() {
           resizeMode="cover"
         >
           <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.6)']}
+            colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)']}
             style={styles.heroGradient}
           >
             {/* Language switch button */}
@@ -51,8 +51,17 @@ export default function HomeScreen() {
               <Ionicons name="chevron-down" size={16} color={Colors.white} />
             </TouchableOpacity>
 
+            {/* QR Scanner button */}
+            <TouchableOpacity
+              style={[styles.qrButton, { top: insets.top + 10 }]}
+              onPress={() => router.push('/scanner')}
+            >
+              <Ionicons name="qr-code" size={20} color={Colors.white} />
+            </TouchableOpacity>
+
             {/* Welcome text on hero */}
             <View style={styles.heroContent}>
+              <Text style={styles.heroSubtitle}>{siteInfo?.subtitle || 'UNESCO World Heritage'}</Text>
               <Text style={styles.heroTitle}>{siteInfo?.title || siteSettings?.site_name}</Text>
             </View>
           </LinearGradient>
@@ -61,49 +70,88 @@ export default function HomeScreen() {
         {/* Content Section */}
         <View style={styles.contentSection}>
           {/* Description */}
-          <Text style={styles.description}>{siteInfo?.description || siteSettings?.welcome_description}</Text>
+          <Text style={styles.description}>
+            {siteInfo?.description || siteSettings?.welcome_description}
+          </Text>
 
-          {/* Start Tour Button */}
-          <TouchableOpacity
-            style={styles.startButton}
-            onPress={() => router.push('/tour')}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.startButtonText}>START TOUR</Text>
-            <Ionicons name="arrow-forward" size={20} color={Colors.white} />
-          </TouchableOpacity>
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => router.push('/tour')}
+              activeOpacity={0.9}
+            >
+              <Ionicons name="headset" size={22} color={Colors.white} />
+              <Text style={styles.primaryButtonText}>START TOUR</Text>
+              <View style={styles.badgeSmall}>
+                <Text style={styles.badgeText}>{tourStops.length}</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push('/legends')}
+              activeOpacity={0.9}
+            >
+              <Ionicons name="book" size={22} color={Colors.accent} />
+              <Text style={styles.secondaryButtonText}>LEGENDS</Text>
+              <View style={[styles.badgeSmall, styles.badgeSecondary]}>
+                <Text style={[styles.badgeText, { color: Colors.accent }]}>{legends.length}</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
 
           {/* Stats Row */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Ionicons name="location" size={24} color={Colors.accent} />
+              <Ionicons name="location" size={28} color={Colors.accent} />
               <Text style={styles.statValue}>{tourStops.length}</Text>
               <Text style={styles.statLabel}>Stops</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Ionicons name="time" size={24} color={Colors.accent} />
+              <Ionicons name="time" size={28} color={Colors.accent} />
               <Text style={styles.statValue}>~{totalMinutes}</Text>
               <Text style={styles.statLabel}>Minutes</Text>
             </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Ionicons name="language" size={28} color={Colors.accent} />
+              <Text style={styles.statValue}>9</Text>
+              <Text style={styles.statLabel}>Languages</Text>
+            </View>
           </View>
 
-          {/* Info Cards */}
-          <View style={styles.infoCards}>
-            <View style={styles.infoCard}>
-              <View style={styles.infoIconContainer}>
+          {/* Feature Cards */}
+          <Text style={styles.sectionTitle}>FEATURES</Text>
+          <View style={styles.featureCards}>
+            <TouchableOpacity style={styles.featureCard} activeOpacity={0.8}>
+              <View style={[styles.featureIcon, { backgroundColor: Colors.gold[100] }]}>
                 <Ionicons name="headset" size={24} color={Colors.accent} />
               </View>
-              <Text style={styles.infoTitle}>Audio Guide</Text>
-              <Text style={styles.infoText}>Listen to narrated history at each stop</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <View style={styles.infoIconContainer}>
-                <Ionicons name="walk" size={24} color={Colors.accent} />
+              <Text style={styles.featureTitle}>Audio Guide</Text>
+              <Text style={styles.featureDesc}>Professional narration</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.featureCard} 
+              activeOpacity={0.8}
+              onPress={() => router.push('/scanner')}
+            >
+              <View style={[styles.featureIcon, { backgroundColor: Colors.wood[100] }]}>
+                <Ionicons name="qr-code" size={24} color={Colors.primary} />
               </View>
-              <Text style={styles.infoTitle}>Self-Paced</Text>
-              <Text style={styles.infoText}>Explore at your own speed</Text>
-            </View>
+              <Text style={styles.featureTitle}>QR Scanner</Text>
+              <Text style={styles.featureDesc}>Scan at each stop</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.featureCard} activeOpacity={0.8}>
+              <View style={[styles.featureIcon, { backgroundColor: Colors.stone[100] }]}>
+                <Ionicons name="cloud-offline" size={24} color={Colors.stone[700]} />
+              </View>
+              <Text style={styles.featureTitle}>Offline Mode</Text>
+              <Text style={styles.featureDesc}>Works without internet</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -120,7 +168,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   heroImage: {
-    height: height * 0.45,
+    height: height * 0.42,
     width: '100%',
   },
   heroGradient: {
@@ -144,14 +192,28 @@ const styles = StyleSheet.create({
     fontFamily: 'Lato_700Bold',
     color: Colors.white,
   },
+  qrButton: {
+    position: 'absolute',
+    right: 80,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: 10,
+    borderRadius: 20,
+  },
   heroContent: {
-    marginBottom: 20,
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontSize: 12,
+    fontFamily: 'Lato_700Bold',
+    color: Colors.accent,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 4,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: 'Cinzel_700Bold',
     color: Colors.white,
-    textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
@@ -164,37 +226,73 @@ const styles = StyleSheet.create({
     marginTop: -24,
   },
   description: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Lato_400Regular',
     color: Colors.text.secondary,
     lineHeight: 24,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  startButton: {
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  primaryButton: {
+    flex: 1,
     backgroundColor: Colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
+    paddingVertical: 14,
     borderRadius: 12,
     gap: 8,
-    marginBottom: 24,
   },
-  startButtonText: {
-    fontSize: 16,
+  primaryButtonText: {
+    fontSize: 13,
     fontFamily: 'Cinzel_700Bold',
     color: Colors.white,
-    letterSpacing: 2,
+    letterSpacing: 1,
+  },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.accent,
+    gap: 8,
+  },
+  secondaryButtonText: {
+    fontSize: 13,
+    fontFamily: 'Cinzel_700Bold',
+    color: Colors.accent,
+    letterSpacing: 1,
+  },
+  badgeSmall: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  badgeSecondary: {
+    backgroundColor: Colors.gold[100],
+  },
+  badgeText: {
+    fontSize: 12,
+    fontFamily: 'Lato_700Bold',
+    color: Colors.white,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.stone[100],
+    backgroundColor: Colors.stone[50],
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     marginBottom: 24,
   },
   statItem: {
@@ -202,54 +300,61 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: 'Cinzel_700Bold',
     color: Colors.text.primary,
-    marginTop: 8,
+    marginTop: 4,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'Lato_400Regular',
     color: Colors.text.light,
-    marginTop: 4,
+    marginTop: 2,
   },
   statDivider: {
     width: 1,
-    height: 60,
-    backgroundColor: Colors.stone[300],
+    height: 50,
+    backgroundColor: Colors.stone[200],
   },
-  infoCards: {
+  sectionTitle: {
+    fontSize: 11,
+    fontFamily: 'Lato_700Bold',
+    color: Colors.accent,
+    letterSpacing: 2,
+    marginBottom: 12,
+  },
+  featureCards: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
-  infoCard: {
+  featureCard: {
     flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 14,
+    padding: 14,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.stone[200],
   },
-  infoIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.gold[100],
+  featureIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  infoTitle: {
-    fontSize: 14,
+  featureTitle: {
+    fontSize: 12,
     fontFamily: 'Lato_700Bold',
     color: Colors.text.primary,
-    marginBottom: 4,
+    textAlign: 'center',
   },
-  infoText: {
-    fontSize: 12,
+  featureDesc: {
+    fontSize: 10,
     fontFamily: 'Lato_400Regular',
     color: Colors.text.light,
     textAlign: 'center',
+    marginTop: 2,
   },
 });

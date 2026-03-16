@@ -13,6 +13,7 @@ interface AppContextType {
   
   // Tour data
   tourStops: TourStop[];
+  legends: TourStop[];
   siteSettings: SiteSettings | null;
   siteInfo: SiteInfo | null;
   
@@ -29,9 +30,22 @@ interface AppContextType {
   skipForward: () => Promise<void>;
   skipBackward: () => Promise<void>;
   
+  // Ambient sound
+  isAmbientPlaying: boolean;
+  playAmbientSound: (url: string) => Promise<void>;
+  stopAmbientSound: () => Promise<void>;
+  toggleAmbientSound: () => Promise<void>;
+  
   // Loading states
   isLoading: boolean;
   loadData: () => Promise<void>;
+  
+  // Offline
+  isOfflineMode: boolean;
+  setOfflineMode: (offline: boolean) => void;
+  
+  // QR Code
+  getStopByQRCode: (qrCode: string) => Promise<TourStop | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -51,18 +65,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   // Tour data
   const [tourStops, setTourStops] = useState<TourStop[]>([]);
+  const [legends, setLegends] = useState<TourStop[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
   
-  // Audio state
+  // Main audio state
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStopId, setCurrentStopId] = useState<string | null>(null);
   const [playbackPosition, setPlaybackPosition] = useState(0);
   const [playbackDuration, setPlaybackDuration] = useState(0);
   
+  // Ambient sound state
+  const [ambientSound, setAmbientSound] = useState<Audio.Sound | null>(null);
+  const [isAmbientPlaying, setIsAmbientPlaying] = useState(false);
+  
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Offline mode
+  const [isOfflineMode, setOfflineMode] = useState(false);
 
   // Load saved language on mount
   useEffect(() => {
@@ -98,11 +120,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
+      if (sound) sound.unloadAsync();
+      if (ambientSound) ambientSound.unloadAsync();
     };
-  }, [sound]);
+  }, [sound, ambientSound]);
 
   const setSelectedLanguage = async (lang: string) => {
     setSelectedLanguageState(lang);
@@ -117,25 +138,62 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setIsLoading(true);
     try {
       console.log('Loading data from:', API_BASE_URL);
+      
+      // Try to load from offline cache first if in offline mode
+      if (isOfflineMode) {
+        const cached = await AsyncStorage.getItem('offlineData');
+        if (cached) {
+          const data = JSON.parse(cached);
+          setLanguages(data.languages || []);
+          const allStops = data.tour_stops || [];
+          setTourStops(allStops.filter((s: TourStop) => s.stop_type === 'tour'));
+          setLegends(allStops.filter((s: TourStop) => s.stop_type === 'legend'));
+          setSiteSettings(data.settings);
+          setIsLoading(false);
+          return;
+        }
+      }
+      
       const [languagesRes, stopsRes, settingsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}${API_ENDPOINTS.languages}`),
         axios.get(`${API_BASE_URL}${API_ENDPOINTS.tourStops}`),
         axios.get(`${API_BASE_URL}${API_ENDPOINTS.siteSettings}`),
       ]);
       
-      console.log('Languages:', languagesRes.data);
-      console.log('Tour stops:', stopsRes.data);
-      console.log('Site settings:', settingsRes.data);
-      
       setLanguages(languagesRes.data);
-      setTourStops(stopsRes.data);
+      const allStops = stopsRes.data;
+      setTourStops(allStops.filter((s: TourStop) => s.stop_type === 'tour'));
+      setLegends(allStops.filter((s: TourStop) => s.stop_type === 'legend'));
       setSiteSettings(settingsRes.data);
+      
+      // Cache for offline use
+      try {
+        const offlinePackage = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.offlinePackage}`);
+        await AsyncStorage.setItem('offlineData', JSON.stringify(offlinePackage.data));
+      } catch (e) {
+        console.log('Could not cache offline data:', e);
+      }
+      
     } catch (error) {
       console.error('Error loading data:', error);
+      // Try offline cache on error
+      try {
+        const cached = await AsyncStorage.getItem('offlineData');
+        if (cached) {
+          const data = JSON.parse(cached);
+          setLanguages(data.languages || []);
+          const allStops = data.tour_stops || [];
+          setTourStops(allStops.filter((s: TourStop) => s.stop_type === 'tour'));
+          setLegends(allStops.filter((s: TourStop) => s.stop_type === 'legend'));
+          setSiteSettings(data.settings);
+        }
+      } catch (e) {
+        console.error('Could not load offline data:', e);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isOfflineMode]);
 
   // Load site info when language changes
   useEffect(() => {
@@ -167,7 +225,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const playAudio = async (stopId: string, audioUrl: string) => {
     try {
-      // Stop existing audio if any
       if (sound) {
         await sound.unloadAsync();
       }
@@ -190,15 +247,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const pauseAudio = async () => {
-    if (sound) {
-      await sound.pauseAsync();
-    }
+    if (sound) await sound.pauseAsync();
   };
 
   const resumeAudio = async () => {
-    if (sound) {
-      await sound.playAsync();
-    }
+    if (sound) await sound.playAsync();
   };
 
   const stopAudio = async () => {
@@ -214,9 +267,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const seekAudio = async (position: number) => {
-    if (sound) {
-      await sound.setPositionAsync(position);
-    }
+    if (sound) await sound.setPositionAsync(position);
   };
 
   const skipForward = async () => {
@@ -233,6 +284,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // Ambient sound controls
+  const playAmbientSound = async (url: string) => {
+    try {
+      if (ambientSound) {
+        await ambientSound.unloadAsync();
+      }
+      
+      const fullUrl = getFullUrl(url);
+      const { sound: newAmbient } = await Audio.Sound.createAsync(
+        { uri: fullUrl },
+        { shouldPlay: true, isLooping: true, volume: 0.3 }
+      );
+      
+      setAmbientSound(newAmbient);
+      setIsAmbientPlaying(true);
+    } catch (error) {
+      console.error('Error playing ambient sound:', error);
+    }
+  };
+
+  const stopAmbientSound = async () => {
+    if (ambientSound) {
+      await ambientSound.stopAsync();
+      await ambientSound.unloadAsync();
+      setAmbientSound(null);
+      setIsAmbientPlaying(false);
+    }
+  };
+
+  const toggleAmbientSound = async () => {
+    if (isAmbientPlaying && ambientSound) {
+      await ambientSound.pauseAsync();
+      setIsAmbientPlaying(false);
+    } else if (ambientSound) {
+      await ambientSound.playAsync();
+      setIsAmbientPlaying(true);
+    }
+  };
+
+  // QR Code lookup
+  const getStopByQRCode = async (qrCode: string): Promise<TourStop | null> => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/tour-stops/qr/${qrCode}`);
+      return res.data;
+    } catch (error) {
+      console.error('Error getting stop by QR:', error);
+      return null;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -240,6 +341,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setSelectedLanguage,
         languages,
         tourStops,
+        legends,
         siteSettings,
         siteInfo,
         isPlaying,
@@ -253,8 +355,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         seekAudio,
         skipForward,
         skipBackward,
+        isAmbientPlaying,
+        playAmbientSound,
+        stopAmbientSound,
+        toggleAmbientSound,
         isLoading,
         loadData,
+        isOfflineMode,
+        setOfflineMode,
+        getStopByQRCode,
       }}
     >
       {children}
