@@ -121,13 +121,17 @@ export default function LanguageSelectionScreen() {
                   onPress={() => handleLanguageSelect(language.code)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.flagText}>{language.flag_emoji}</Text>
-                  <Text style={[
-                    styles.languageNameText,
-                    selectedLang === language.code && styles.selectedLanguageName,
-                  ]}>
-                    {language.native_name}
-                  </Text>
+                  <View style={styles.flagContainer}>
+                    <Text style={styles.flagText}>{language.flag_emoji}</Text>
+                  </View>
+                  <View style={styles.langTextContainer}>
+                    <Text style={[
+                      styles.languageNameText,
+                      selectedLang === language.code && styles.selectedLanguageName,
+                    ]}>
+                      {language.native_name}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))
             ) : (
@@ -287,13 +291,22 @@ const styles = StyleSheet.create({
     minWidth: (width - 68) / 2,
     minHeight: 48,
   },
+  flagContainer: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   flagText: {
-    fontSize: 26,
-    marginRight: 10,
+    fontSize: 24,
+  },
+  langTextContainer: {
+    flex: 1,
+    marginLeft: 8,
   },
   languageNameText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
   selectedLanguageItem: {
