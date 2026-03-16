@@ -101,3 +101,133 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: Test the Castle Audio Guide backend API endpoints including health check, languages, tour stops, site settings, and offline package functionality.
+
+backend:
+  - task: "Health Check Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/health endpoint returns healthy status successfully with timestamp"
+
+  - task: "Languages API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/languages returns exactly 5 languages (Slovak, English, German, Polish, Hungarian) with correct structure including id, code, name, native_name, flag_emoji, is_active, and order fields"
+
+  - task: "Tour Stops API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/tour-stops returns 7 tour stops numbered 1-7, each with translations in all 5 languages and proper duration_seconds values (180-250 seconds range)"
+
+  - task: "Individual Tour Stop Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/tour-stops/{id} successfully retrieves individual tour stop with complete structure including translations and metadata"
+
+  - task: "Site Settings API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/site-settings returns site settings with site_name 'Spišský Hrad' and all required fields including colors, descriptions, and branding"
+
+  - task: "Site Info Slovak Language"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/site-info?language=sk returns Slovak site information with correct language_code, title, and description"
+
+  - task: "Site Info English Language"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/site-info?language=en returns English site information with correct language_code, title, and description"
+
+  - task: "Offline Package API Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "GET /api/offline-package returns complete package with all 5 languages, 7 tour stops, site info for all languages, version, and generation timestamp"
+
+  - task: "Database Seeding"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "POST /api/seed-data successfully populates database with castle tour data including languages, tour stops, site info, and settings"
+
+frontend:
+  # Frontend testing not performed - only backend testing requested
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus: []
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "testing"
+      message: "Comprehensive backend API testing completed successfully. All 37 test cases passed with 100% success rate. Castle Audio Guide backend is fully functional with proper data seeding, all required endpoints working correctly, and complete multilingual support for 5 languages (Slovak, English, German, Polish, Hungarian). All tour stops (1-7) have proper translations and durations. Site settings correctly configured for Spišský Hrad. Offline package functionality working perfectly. Backend is production-ready."
