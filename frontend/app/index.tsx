@@ -90,7 +90,7 @@ export default function LanguageSelectionScreen() {
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>SPIŠSKÝ HRAD</Text>
+          <Text style={styles.title}>SPIŠ CASTLE</Text>
           <Text style={styles.subtitle}>AUDIO GUIDE</Text>
 
           {/* Description */}
@@ -180,6 +180,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
     marginTop: 16,
+    letterSpacing: 2,
   },
   loadingText: {
     marginTop: 12,
