@@ -4,21 +4,33 @@ import {
   Text,
   StyleSheet,
   ImageBackground,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   Dimensions,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
 import { Colors } from '../constants/colors';
 import { useApp } from '../context/AppContext';
-import { LanguageButton } from '../components/LanguageButton';
 
 const { height, width } = Dimensions.get('window');
+
+// Language data with flags as fallback
+const LANGUAGE_FLAGS: { [key: string]: string } = {
+  sk: '🇸🇰',
+  en: '🇬🇧',
+  de: '🇩🇪',
+  pl: '🇵🇱',
+  hu: '🇭🇺',
+  fr: '🇫🇷',
+  es: '🇪🇸',
+  ru: '🇷🇺',
+  zh: '🇨🇳',
+};
 
 export default function LanguageSelectionScreen() {
   const router = useRouter();
@@ -51,10 +63,7 @@ export default function LanguageSelectionScreen() {
     );
   }
 
-  // Split languages into two columns
   const activeLanguages = languages.filter(lang => lang.is_active).sort((a, b) => a.order - b.order);
-  
-  console.log('Languages loaded:', languages.length, 'Active:', activeLanguages.length);
 
   return (
     <ImageBackground
@@ -63,7 +72,7 @@ export default function LanguageSelectionScreen() {
       resizeMode="cover"
     >
       <LinearGradient
-        colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.95)']}
+        colors={['rgba(0,0,0,0.4)', 'rgba(0,0,0,0.75)', 'rgba(0,0,0,0.95)']}
         style={styles.gradient}
       >
         <ScrollView
@@ -73,27 +82,21 @@ export default function LanguageSelectionScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo / Icon */}
+          {/* Logo */}
           <View style={styles.logoContainer}>
-            {siteSettings.logo_url ? (
-              <Image
-                source={{ uri: siteSettings.logo_url }}
-                style={styles.logo}
-                contentFit="contain"
-              />
-            ) : (
-              <View style={styles.logoPlaceholder}>
-                <Ionicons name="shield" size={50} color={Colors.accent} />
-              </View>
-            )}
+            <View style={styles.logoCircle}>
+              <Ionicons name="shield" size={40} color={Colors.accent} />
+            </View>
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>{siteSettings.site_name}</Text>
-          <Text style={styles.subtitle}>{siteSettings.site_subtitle}</Text>
+          <Text style={styles.title}>SPIŠSKÝ HRAD</Text>
+          <Text style={styles.subtitle}>AUDIO GUIDE</Text>
 
           {/* Description */}
-          <Text style={styles.description}>{siteSettings.welcome_description}</Text>
+          <Text style={styles.description}>
+            {siteSettings.welcome_description}
+          </Text>
 
           {/* UNESCO Badge */}
           <View style={styles.unescoBadge}>
@@ -101,57 +104,51 @@ export default function LanguageSelectionScreen() {
             <Text style={styles.unescoText}>UNESCO World Heritage Site</Text>
           </View>
 
-          {/* Language selection header */}
-          <View style={styles.languageHeader}>
-            <View style={styles.goldLine} />
-            <Text style={styles.selectLanguage}>SELECT YOUR LANGUAGE</Text>
-            <View style={styles.goldLine} />
-          </View>
-          
-          {/* Language grid - show all 9 languages */}
-          <View style={styles.languageGrid}>
-            {activeLanguages.length > 0 ? (
-              activeLanguages.map(language => (
-                <TouchableOpacity
-                  key={language.code}
-                  style={[
-                    styles.languageItem,
-                    selectedLang === language.code && styles.selectedLanguageItem,
-                  ]}
-                  onPress={() => handleLanguageSelect(language.code)}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.flagContainer}>
-                    <Text style={styles.flagText}>{language.flag_emoji}</Text>
-                  </View>
-                  <View style={styles.langTextContainer}>
-                    <Text style={[
-                      styles.languageNameText,
-                      selectedLang === language.code && styles.selectedLanguageName,
-                    ]}>
-                      {language.native_name}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <View style={styles.loadingLangs}>
-                <Text style={styles.loadingLangsText}>Loading languages...</Text>
-              </View>
-            )}
+          {/* Language Header */}
+          <View style={styles.langHeader}>
+            <View style={styles.headerLine} />
+            <Text style={styles.langHeaderText}>SELECT YOUR LANGUAGE</Text>
+            <View style={styles.headerLine} />
           </View>
 
-          {/* Feature badges */}
-          <View style={styles.featureBadges}>
-            <View style={styles.featureBadge}>
+          {/* Language Grid */}
+          <View style={styles.langGrid}>
+            {activeLanguages.map((lang) => {
+              const isSelected = selectedLang === lang.code;
+              const flag = lang.flag_emoji || LANGUAGE_FLAGS[lang.code] || '🏳️';
+              
+              return (
+                <Pressable
+                  key={lang.code}
+                  onPress={() => handleLanguageSelect(lang.code)}
+                  style={({ pressed }) => [
+                    styles.langButton,
+                    isSelected && styles.langButtonSelected,
+                    pressed && { opacity: 0.8 }
+                  ]}
+                >
+                  <Text>
+                    <Text style={styles.langFlag}>{flag} </Text>
+                    <Text style={[styles.langName, isSelected && styles.langNameSelected]}>
+                      {lang.native_name}
+                    </Text>
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Features */}
+          <View style={styles.features}>
+            <View style={styles.featureItem}>
               <Ionicons name="headset" size={16} color={Colors.gold[300]} />
-              <Text style={styles.featureText}>Audio Guide</Text>
+              <Text style={styles.featureText}>Audio</Text>
             </View>
-            <View style={styles.featureBadge}>
+            <View style={styles.featureItem}>
               <Ionicons name="book" size={16} color={Colors.gold[300]} />
               <Text style={styles.featureText}>Legends</Text>
             </View>
-            <View style={styles.featureBadge}>
+            <View style={styles.featureItem}>
               <Ionicons name="qr-code" size={16} color={Colors.gold[300]} />
               <Text style={styles.featureText}>QR Scan</Text>
             </View>
@@ -173,22 +170,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.stone[900],
+    backgroundColor: '#1a1a1a',
   },
   loadingContent: {
     alignItems: 'center',
   },
   loadingTitle: {
     fontSize: 28,
-    fontFamily: 'Cinzel_700Bold',
-    color: Colors.white,
+    fontWeight: '700',
+    color: '#fff',
     marginTop: 16,
   },
   loadingText: {
-    marginTop: 16,
+    marginTop: 12,
     fontSize: 14,
-    color: Colors.stone[400],
-    fontFamily: 'Lato_400Regular',
+    color: '#888',
   },
   content: {
     flexGrow: 1,
@@ -199,14 +195,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 16,
   },
-  logo: {
-    width: 80,
-    height: 80,
-  },
-  logoPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  logoCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: 'rgba(212, 175, 55, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -214,129 +206,106 @@ const styles = StyleSheet.create({
     borderColor: Colors.accent,
   },
   title: {
-    fontSize: 32,
-    fontFamily: 'Cinzel_700Bold',
-    color: Colors.white,
+    fontSize: 30,
+    fontWeight: '700',
+    color: '#FFFFFF',
     textAlign: 'center',
     letterSpacing: 3,
   },
   subtitle: {
     fontSize: 14,
-    fontFamily: 'Cinzel_600SemiBold',
+    fontWeight: '600',
     color: Colors.accent,
     textAlign: 'center',
     letterSpacing: 4,
     marginTop: 4,
-    textTransform: 'uppercase',
   },
   description: {
-    fontSize: 15,
-    fontFamily: 'Lato_400Regular',
-    color: Colors.stone[300],
+    fontSize: 14,
+    color: '#aaa',
     textAlign: 'center',
     lineHeight: 22,
     marginTop: 16,
-    marginBottom: 12,
-    paddingHorizontal: 16,
+    marginBottom: 16,
+    paddingHorizontal: 12,
   },
   unescoBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(212, 175, 55, 0.15)',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 20,
-    gap: 6,
     marginBottom: 24,
   },
   unescoText: {
     fontSize: 12,
-    fontFamily: 'Lato_700Bold',
+    fontWeight: '700',
     color: Colors.accent,
+    marginLeft: 8,
     letterSpacing: 1,
   },
-  languageHeader: {
+  langHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    width: '100%',
     marginBottom: 16,
   },
-  goldLine: {
+  headerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: Colors.gold[700],
+    backgroundColor: 'rgba(212, 175, 55, 0.4)',
   },
-  selectLanguage: {
+  langHeaderText: {
     fontSize: 11,
-    fontFamily: 'Lato_700Bold',
-    color: Colors.stone[400],
+    fontWeight: '700',
+    color: '#888',
     letterSpacing: 2,
+    marginHorizontal: 12,
   },
-  languageGrid: {
+  langGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     gap: 10,
     marginBottom: 24,
+    width: '100%',
   },
-  languageItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(50, 50, 50, 0.95)',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  langButton: {
+    backgroundColor: 'rgba(40, 40, 40, 0.95)',
+    padding: 14,
     borderRadius: 10,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.gold[700],
-    minWidth: (width - 68) / 2,
-    minHeight: 48,
+    minWidth: (width - 58) / 2,
   },
-  flagContainer: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+  langButtonSelected: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
   },
-  flagText: {
-    fontSize: 24,
+  langFlag: {
+    fontSize: 22,
   },
-  langTextContainer: {
-    flex: 1,
-    marginLeft: 8,
-  },
-  languageNameText: {
+  langName: {
     fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
   },
-  selectedLanguageItem: {
-    backgroundColor: Colors.accent,
-    borderColor: Colors.accent,
+  langNameSelected: {
+    color: '#1a1a1a',
   },
-  selectedLanguageName: {
-    color: Colors.stone[900],
-  },
-  featureBadges: {
+  features: {
     flexDirection: 'row',
-    gap: 16,
+    justifyContent: 'center',
+    gap: 20,
   },
-  featureBadge: {
+  featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
   featureText: {
     fontSize: 12,
-    fontFamily: 'Lato_400Regular',
     color: Colors.gold[300],
-  },
-  loadingLangs: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  loadingLangsText: {
-    color: Colors.stone[400],
-    fontFamily: 'Lato_400Regular',
-    fontSize: 14,
+    marginLeft: 6,
   },
 });
