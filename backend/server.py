@@ -38,7 +38,7 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'spissky_hrad_ultimate')]
+db = client[os.environ.get('DB_NAME', 'test_database')]
 
 # Create uploads directories
 UPLOAD_DIR = ROOT_DIR / "uploads"
