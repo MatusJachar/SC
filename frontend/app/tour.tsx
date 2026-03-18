@@ -17,21 +17,21 @@ const TOUR_DEFS: Record<string, { stops: number[]; legends: number[] }> = {
   complete: { stops: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], legends: [1, 2, 3, 4] },
 };
 
-// Unique icon for each stop number
+// Unique icon for each stop number - all in unified golden color
 const STOP_ICONS: Record<number, { icon: string; bg: string }> = {
-  1:  { icon: 'flag', bg: '#4CAF50' },
-  2:  { icon: 'camera', bg: '#2196F3' },
-  3:  { icon: 'cube', bg: '#9C27B0' },
-  4:  { icon: 'restaurant', bg: '#FF5722' },
-  5:  { icon: 'layers', bg: '#009688' },
-  6:  { icon: 'git-branch', bg: '#795548' },
-  7:  { icon: 'trending-up', bg: '#3F51B5' },
-  8:  { icon: 'grid', bg: '#607D8B' },
-  9:  { icon: 'skull', bg: '#E91E63' },
-  10: { icon: 'home', bg: '#FF9800' },
-  11: { icon: 'telescope', bg: '#00BCD4' },
-  12: { icon: 'business', bg: '#8BC34A' },
-  13: { icon: 'eye', bg: '#FFC107' },
+  1:  { icon: 'flag', bg: '#D4A017' },
+  2:  { icon: 'camera', bg: '#D4A017' },
+  3:  { icon: 'cube', bg: '#D4A017' },
+  4:  { icon: 'restaurant', bg: '#D4A017' },
+  5:  { icon: 'layers', bg: '#D4A017' },
+  6:  { icon: 'git-branch', bg: '#D4A017' },
+  7:  { icon: 'trending-up', bg: '#D4A017' },
+  8:  { icon: 'grid', bg: '#D4A017' },
+  9:  { icon: 'skull', bg: '#D4A017' },
+  10: { icon: 'home', bg: '#D4A017' },
+  11: { icon: 'telescope', bg: '#D4A017' },
+  12: { icon: 'business', bg: '#D4A017' },
+  13: { icon: 'eye', bg: '#D4A017' },
 };
 
 export default function TourScreen() {

@@ -17,7 +17,7 @@ const TOUR_TYPES = [
     name: 'Express Tour',
     icon: 'flash',
     description: 'Quick highlights of the castle. Perfect when you have limited time.',
-    duration: '~45 min',
+    duration: '~30 min',
     stops: [1, 2, 3, 7, 8, 11, 12],
     legends: [3], // Ghost of Spiš Castle
     color: '#FF6B35',

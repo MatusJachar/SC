@@ -79,6 +79,12 @@ export default function AdminDashboard() {
   const [editImageUrl, setEditImageUrl] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageEditStop, setImageEditStop] = useState<TourStop | null>(null);
+  
+  // Audio URL editing  
+  const [editAudioUrl, setEditAudioUrl] = useState('');
+  
+  // Stop number editing
+  const [editStopNumber, setEditStopNumber] = useState('');
 
   const getAuthHeaders = useCallback(() => {
     return { headers: { Authorization: `Bearer ${token}` } };
@@ -132,6 +138,8 @@ export default function AdminDashboard() {
     setEditTitle(trans?.title || '');
     setEditDescription(trans?.description || '');
     setEditShortDesc(trans?.short_description || '');
+    setEditAudioUrl(trans?.audio_url || '');
+    setEditStopNumber(String(stop.stop_number));
     setShowEditModal(true);
   };
 
@@ -141,7 +149,7 @@ export default function AdminDashboard() {
     try {
       const updatedTranslations = editingStop.translations.map(t => {
         if (t.language_code === editingLang) {
-          return { ...t, title: editTitle, description: editDescription, short_description: editShortDesc };
+          return { ...t, title: editTitle, description: editDescription, short_description: editShortDesc, audio_url: editAudioUrl || t.audio_url };
         }
         return t;
       });
@@ -151,12 +159,17 @@ export default function AdminDashboard() {
           title: editTitle,
           description: editDescription,
           short_description: editShortDesc,
-          audio_url: null,
+          audio_url: editAudioUrl || null,
         });
+      }
+      const updateData: any = { translations: updatedTranslations };
+      const newNum = parseInt(editStopNumber);
+      if (!isNaN(newNum) && newNum !== editingStop.stop_number) {
+        updateData.stop_number = newNum;
       }
       await axios.put(
         `${API_BASE_URL}/admin/tour-stops/${editingStop.id}`,
-        { translations: updatedTranslations },
+        updateData,
         getAuthHeaders()
       );
       setShowEditModal(false);
@@ -543,12 +556,16 @@ export default function AdminDashboard() {
               {editingStop?.stop_type === 'legend' ? 'Legend' : `Stop ${editingStop?.stop_number}`} - {editingLang.toUpperCase()}
             </Text>
             <ScrollView style={styles.modalScroll}>
+              <Text style={styles.label}>Stop Number</Text>
+              <TextInput style={styles.modalInput} value={editStopNumber} onChangeText={setEditStopNumber} keyboardType="number-pad" placeholderTextColor={Colors.text.light} />
               <Text style={styles.label}>Title</Text>
               <TextInput style={styles.modalInput} value={editTitle} onChangeText={setEditTitle} placeholderTextColor={Colors.text.light} />
               <Text style={styles.label}>Short Description</Text>
               <TextInput style={styles.modalInput} value={editShortDesc} onChangeText={setEditShortDesc} multiline placeholderTextColor={Colors.text.light} />
               <Text style={styles.label}>Full Description</Text>
               <TextInput style={[styles.modalInput, styles.modalTextarea]} value={editDescription} onChangeText={setEditDescription} multiline numberOfLines={8} placeholderTextColor={Colors.text.light} />
+              <Text style={styles.label}>Audio URL ({editingLang.toUpperCase()})</Text>
+              <TextInput style={styles.modalInput} value={editAudioUrl} onChangeText={setEditAudioUrl} placeholderTextColor={Colors.text.light} placeholder="/api/uploads/audio/stop1_en.mp3" />
             </ScrollView>
             <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveStopEdit} disabled={saving}>
               {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}

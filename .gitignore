@@ -83,3 +83,7 @@ catedrala_repo/.git/objects/pack/pack-b38ed3367eb43e5fbeb18ac1e514d81347e5511f.p
 # Environment files
 *.env
 *.env.*
+-e 
+# Environment files
+*.env
+*.env.*
