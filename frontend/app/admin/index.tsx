@@ -58,7 +58,7 @@ export default function AdminLoginScreen() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.content, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.white} />
+          <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
         </Pressable>
 
         <View style={styles.header}>
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   errorText: { color: Colors.error, fontSize: 14 },
   form: { gap: 8 },
   label: { fontSize: 14, fontWeight: '600', color: Colors.text.secondary, marginTop: 8 },
-  input: { backgroundColor: Colors.backgroundLight, borderRadius: 12, padding: 16, fontSize: 16, color: Colors.white, borderWidth: 1, borderColor: Colors.borderLight },
+  input: { backgroundColor: Colors.backgroundLight, borderRadius: 12, padding: 16, fontSize: 16, color: Colors.text.primary, borderWidth: 1, borderColor: Colors.borderLight },
   loginButton: { backgroundColor: Colors.accent, borderRadius: 28, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
   loginButtonPressed: { backgroundColor: Colors.accentDark },
   loginButtonDisabled: { opacity: 0.7 },

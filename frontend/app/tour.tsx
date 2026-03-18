@@ -117,6 +117,17 @@ export default function TourScreen() {
         <View style={styles.extraSection}>
           <Text style={styles.sectionTitle}>More</Text>
 
+          <Pressable style={styles.extraCard} onPress={() => router.push('/features/info')}>
+            <View style={[styles.extraIcon, { backgroundColor: '#4CAF50' }]}>
+              <Ionicons name="information-circle" size={20} color={Colors.white} />
+            </View>
+            <View style={styles.extraInfo}>
+              <Text style={styles.extraTitle}>Visitor Information</Text>
+              <Text style={styles.extraDesc}>Prices, hours, transport & more</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.text.light} />
+          </Pressable>
+
           <Pressable style={styles.extraCard} onPress={() => router.push('/features/video')}>
             <View style={[styles.extraIcon, { backgroundColor: '#E91E63' }]}>
               <Ionicons name="videocam" size={20} color={Colors.white} />

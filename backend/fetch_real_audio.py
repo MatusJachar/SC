@@ -9,7 +9,7 @@ import requests
 from pathlib import Path
 import time
 
-BASE_URL = "https://audio-tour-cache.preview.emergentagent.com"
+BASE_URL = "https://spis-audio-explore.preview.emergentagent.com"
 AUDIO_DIR = Path("/app/backend/uploads/audio")
 
 def fetch_all_audio():

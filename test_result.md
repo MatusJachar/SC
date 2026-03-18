@@ -333,39 +333,51 @@ agent_communication:
     
     - agent: "testing"
       message: "ADMIN PANEL TESTING COMPLETED - All 19 admin panel tests PASSED (100% success rate)! ✅ Admin authentication working with credentials {'username':'admin','password':'admin123'}. All CRUD operations functional: tour stops management (16 stops), site settings updates, multilingual site info management (9 languages), languages with flag emojis, QR codes generation. Mobile content management system fully operational and production-ready."
+    
+    - agent: "testing"
+      message: "COMPREHENSIVE SHOP & DATA IMPORT TESTING COMPLETED - All newly implemented features PASSED (100% success rate)! ✅ Shop Products API returns exactly 21 products as required with authentic castle-themed items. Shop settings properly configured. Admin shop management fully functional with CRUD operations. Data import system working perfectly - imported 17 total tour stops (13 tour + 4 legends) with real content in all 9 languages from tour_stops_import.json. Audio available for stops 1-7. All backend tasks are now fully tested and operational. System exceeds all review requirements with 9 languages, 17 tour stops, 21 shop products, and complete admin functionality."
 
   - task: "Shop Products API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "New endpoints added: GET /api/shop/products, GET /api/shop/settings, CRUD admin endpoints for products and shop settings"
+        - working: true
+          agent: "testing"
+          comment: "GET /api/shop/products returns exactly 21 products with proper structure (name, price, currency, icon, is_active). GET /api/shop/settings returns shop info with name 'Castle Gift Shop', description, opening hours, and location. All shop products are properly seeded with authentic castle-themed items like fridge magnets, medieval items, books, and souvenirs."
 
   - task: "Admin Shop Management"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Admin CRUD for shop products and shop settings. Endpoints: /api/admin/shop/products, /api/admin/shop/settings"
+        - working: true
+          agent: "testing"
+          comment: "GET /api/admin/shop/products returns all 21 products (same as public API but with admin access). GET /api/admin/shop/settings returns shop settings with authentication. All admin shop endpoints working correctly with proper JWT authentication. CRUD operations functional for products and settings management."
 
   - task: "Data Import - Tour Stops with Real Content"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/import_data.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Imported 13 tour stops + 4 legends with real content in 9 languages from tour_stops_import.json. Audio available for stops 1-7 in 5 languages (sk,en,de,pl,hu)."
+        - working: true
+          agent: "testing"
+          comment: "Data import successful - verified 17 total tour stops: 13 tour stops (numbered 1-13) + 4 legends (numbered 1-4). All stops have complete translations in all 9 languages (SK, EN, DE, PL, HU, FR, ES, RU, ZH) with proper titles, descriptions, and audio URLs where available. Import script processed tour_stops_import.json correctly and created proper stop types, QR codes, and multilingual content."

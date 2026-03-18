@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../context/AppContext';
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import { API_BASE_URL } from '../../constants/api';
+import { API_BASE_URL, getFullUrl } from '../../constants/api';
 
 const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
 
@@ -66,7 +66,7 @@ export default function TourDetailScreen() {
     <View style={styles.container}>
       {/* Hero */}
       <View style={styles.heroContainer}>
-        <Image source={{ uri: CASTLE_IMAGE }} style={styles.heroImage} resizeMode="cover" />
+        <Image source={{ uri: stop.image_url ? getFullUrl(stop.image_url) : CASTLE_IMAGE }} style={styles.heroImage} resizeMode="cover" />
         <View style={styles.heroOverlay} />
         <View style={[styles.heroContent, { paddingTop: insets.top + 8 }]}>
           <Pressable style={styles.backButton} onPress={() => router.back()}>

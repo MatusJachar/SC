@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert, TextInput, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, TextInput, Modal, Image, Platform, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Colors } from '../../constants/colors';
-import { API_BASE_URL } from '../../constants/api';
+import { API_BASE_URL, getFullUrl } from '../../constants/api';
 import { Ionicons } from '@expo/vector-icons';
 import { TourStop, Language } from '../../types';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface SiteSettingsData {
   site_name: string;
@@ -20,6 +22,16 @@ interface SiteSettingsData {
   admin_password: string;
 }
 
+interface QRCodeItem {
+  stop_id: string;
+  qr_code_id: string;
+  stop_number: number;
+  stop_type: string;
+  title: string;
+  qr_url: string;
+  target_url: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -28,7 +40,7 @@ export default function AdminDashboard() {
   const [tourStops, setTourStops] = useState<TourStop[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [settings, setSettings] = useState<SiteSettingsData | null>(null);
-  const [activeTab, setActiveTab] = useState<'stops' | 'settings' | 'languages' | 'shop'>('stops');
+  const [activeTab, setActiveTab] = useState<'stops' | 'settings' | 'qrcodes' | 'shop'>('stops');
   const [editingStop, setEditingStop] = useState<TourStop | null>(null);
   const [editingLang, setEditingLang] = useState<string>('en');
   const [editTitle, setEditTitle] = useState('');
@@ -41,7 +53,12 @@ export default function AdminDashboard() {
   const [editSiteName, setEditSiteName] = useState('');
   const [editSubtitle, setEditSubtitle] = useState('');
   const [editWelcome, setEditWelcome] = useState('');
+  const [editHeroImage, setEditHeroImage] = useState('');
+  const [editLogoUrl, setEditLogoUrl] = useState('');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  // QR Codes
+  const [qrCodes, setQrCodes] = useState<QRCodeItem[]>([]);
 
   // Shop management
   const [shopProducts, setShopProducts] = useState<any[]>([]);
@@ -57,6 +74,11 @@ export default function AdminDashboard() {
   const [shopDesc, setShopDesc] = useState('');
   const [shopHours, setShopHours] = useState('');
   const [shopLocation, setShopLocation] = useState('');
+
+  // Image URL editing for tour stops
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageEditStop, setImageEditStop] = useState<TourStop | null>(null);
 
   const getAuthHeaders = useCallback(() => {
     return { headers: { Authorization: `Bearer ${token}` } };
@@ -82,18 +104,20 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const auth = { headers: { Authorization: `Bearer ${token}` } };
-      const [stopsRes, langsRes, settingsRes, shopProdsRes, shopSettRes] = await Promise.all([
+      const [stopsRes, langsRes, settingsRes, shopProdsRes, shopSettRes, qrRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/admin/tour-stops`, auth),
         axios.get(`${API_BASE_URL}/admin/languages`, auth),
         axios.get(`${API_BASE_URL}/admin/site-settings`, auth),
         axios.get(`${API_BASE_URL}/admin/shop/products`, auth).catch(() => ({ data: [] })),
         axios.get(`${API_BASE_URL}/admin/shop/settings`, auth).catch(() => ({ data: null })),
+        axios.get(`${API_BASE_URL}/admin/qr-codes`, auth).catch(() => ({ data: [] })),
       ]);
       setTourStops(stopsRes.data);
       setLanguages(langsRes.data);
       setSettings(settingsRes.data);
       setShopProducts(shopProdsRes.data);
       setShopSettings(shopSettRes.data);
+      setQrCodes(qrRes.data);
     } catch (err) {
       console.error('Error loading admin data:', err);
     } finally {
@@ -121,8 +145,6 @@ export default function AdminDashboard() {
         }
         return t;
       });
-
-      // If translation doesn't exist, add it
       if (!updatedTranslations.find(t => t.language_code === editingLang)) {
         updatedTranslations.push({
           language_code: editingLang,
@@ -132,7 +154,6 @@ export default function AdminDashboard() {
           audio_url: null,
         });
       }
-
       await axios.put(
         `${API_BASE_URL}/admin/tour-stops/${editingStop.id}`,
         { translations: updatedTranslations },
@@ -147,11 +168,37 @@ export default function AdminDashboard() {
     }
   };
 
+  const openImageEdit = (stop: TourStop) => {
+    setImageEditStop(stop);
+    setEditImageUrl(stop.image_url || '');
+    setShowImageModal(true);
+  };
+
+  const saveImageUrl = async () => {
+    if (!imageEditStop || !token) return;
+    setSaving(true);
+    try {
+      await axios.put(
+        `${API_BASE_URL}/admin/tour-stops/${imageEditStop.id}`,
+        { image_url: editImageUrl },
+        getAuthHeaders()
+      );
+      setShowImageModal(false);
+      loadData();
+    } catch (err) {
+      console.error('Error saving image:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const openSettingsEdit = () => {
     if (settings) {
       setEditSiteName(settings.site_name);
       setEditSubtitle(settings.site_subtitle);
       setEditWelcome(settings.welcome_description);
+      setEditHeroImage(settings.default_hero_image || '');
+      setEditLogoUrl(settings.logo_url || '');
     }
     setShowSettingsModal(true);
   };
@@ -160,11 +207,10 @@ export default function AdminDashboard() {
     if (!token) return;
     setSaving(true);
     try {
-      await axios.put(
-        `${API_BASE_URL}/admin/site-settings`,
-        { site_name: editSiteName, site_subtitle: editSubtitle, welcome_description: editWelcome },
-        getAuthHeaders()
-      );
+      const data: any = { site_name: editSiteName, site_subtitle: editSubtitle, welcome_description: editWelcome };
+      if (editHeroImage) data.default_hero_image = editHeroImage;
+      if (editLogoUrl) data.logo_url = editLogoUrl;
+      await axios.put(`${API_BASE_URL}/admin/site-settings`, data, getAuthHeaders());
       setShowSettingsModal(false);
       loadData();
     } catch (err) {
@@ -261,12 +307,17 @@ export default function AdminDashboard() {
   const tours = tourStops.filter(s => s.stop_type === 'tour');
   const legendsList = tourStops.filter(s => s.stop_type === 'legend');
 
+  const getQrImageUrl = (qrCodeId: string) => {
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    return `${baseUrl}/api/qr/code/${qrCodeId}`;
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top + 8, paddingBottom: insets.bottom }]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.white} />
+          <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
         </Pressable>
         <Text style={styles.headerTitle}>Admin Panel</Text>
         <Pressable style={styles.logoutBtn} onPress={handleLogout}>
@@ -277,14 +328,14 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
         <View style={styles.tabs}>
-          {(['stops', 'settings', 'shop', 'languages'] as const).map(tab => (
+          {(['stops', 'settings', 'qrcodes', 'shop'] as const).map(tab => (
             <Pressable
               key={tab}
               style={[styles.tab, activeTab === tab && styles.tabActive]}
               onPress={() => setActiveTab(tab)}
             >
               <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {tab === 'stops' ? 'Tour Stops' : tab === 'settings' ? 'Settings' : tab === 'shop' ? 'Shop' : 'Languages'}
+                {tab === 'stops' ? 'Tour Stops' : tab === 'settings' ? 'Settings' : tab === 'qrcodes' ? 'QR Codes' : 'Shop'}
               </Text>
             </Pressable>
           ))}
@@ -292,7 +343,7 @@ export default function AdminDashboard() {
       </ScrollView>
 
       <ScrollView style={styles.scrollContent} contentContainerStyle={styles.scrollContentInner} showsVerticalScrollIndicator={false}>
-        {/* Tour Stops Tab */}
+        {/* ==================== TOUR STOPS TAB ==================== */}
         {activeTab === 'stops' && (
           <>
             <Text style={styles.sectionTitle}>Tour Stops ({tours.length})</Text>
@@ -305,6 +356,9 @@ export default function AdminDashboard() {
                       <Text style={styles.stopNumText}>{stop.stop_number}</Text>
                     </View>
                     <Text style={styles.stopCardTitle} numberOfLines={1}>{enTrans?.title || 'Stop ' + stop.stop_number}</Text>
+                    <Pressable style={styles.imageEditBtn} onPress={() => openImageEdit(stop)}>
+                      <Ionicons name="image" size={16} color={Colors.accent} />
+                    </Pressable>
                   </View>
                   <Text style={styles.stopCardInfo}>{stop.translations.length} translations | {stop.translations.filter(t => t.audio_url).length} audio</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.langBtns}>
@@ -330,6 +384,9 @@ export default function AdminDashboard() {
                   <View style={styles.stopCardHeader}>
                     <Ionicons name="book" size={20} color={Colors.accent} />
                     <Text style={styles.stopCardTitle} numberOfLines={1}>{enTrans?.title || 'Legend'}</Text>
+                    <Pressable style={styles.imageEditBtn} onPress={() => openImageEdit(stop)}>
+                      <Ionicons name="image" size={16} color={Colors.accent} />
+                    </Pressable>
                   </View>
                   <Text style={styles.stopCardInfo}>{stop.translations.length} translations</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.langBtns}>
@@ -349,9 +406,19 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {/* Settings Tab */}
+        {/* ==================== SETTINGS TAB ==================== */}
         {activeTab === 'settings' && settings && (
           <>
+            {/* Hero Image Preview */}
+            {settings.default_hero_image ? (
+              <View style={styles.heroPreview}>
+                <Image source={{ uri: getFullUrl(settings.default_hero_image) }} style={styles.heroPreviewImage} resizeMode="cover" />
+                <View style={styles.heroPreviewOverlay}>
+                  <Text style={styles.heroPreviewText}>Hero Image</Text>
+                </View>
+              </View>
+            ) : null}
+
             <View style={styles.settingsCard}>
               <Text style={styles.settingsLabel}>Site Name</Text>
               <Text style={styles.settingsValue}>{settings.site_name}</Text>
@@ -359,17 +426,16 @@ export default function AdminDashboard() {
               <Text style={styles.settingsValue}>{settings.site_subtitle}</Text>
               <Text style={styles.settingsLabel}>Welcome Description</Text>
               <Text style={styles.settingsValue}>{settings.welcome_description}</Text>
+              <Text style={styles.settingsLabel}>Logo URL</Text>
+              <Text style={styles.settingsValue}>{settings.logo_url || 'Not set'}</Text>
               <Pressable style={styles.editSettingsBtn} onPress={openSettingsEdit}>
-                <Ionicons name="create" size={18} color={Colors.black} />
+                <Ionicons name="create" size={18} color={Colors.white} />
                 <Text style={styles.editSettingsBtnText}>Edit Settings</Text>
               </Pressable>
             </View>
-          </>
-        )}
 
-        {/* Languages Tab */}
-        {activeTab === 'languages' && (
-          <>
+            {/* Languages section */}
+            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Languages ({languages.length})</Text>
             {languages.map(lang => (
               <View key={lang.code} style={styles.langCard}>
                 <Text style={styles.langFlag}>{lang.flag_emoji}</Text>
@@ -378,14 +444,44 @@ export default function AdminDashboard() {
                   <Text style={styles.langCode}>{lang.name} ({lang.code})</Text>
                 </View>
                 <View style={[styles.statusBadge, lang.is_active ? styles.statusActive : styles.statusInactive]}>
-                  <Text style={styles.statusText}>{lang.is_active ? 'Active' : 'Inactive'}</Text>
+                  <Text style={[styles.statusText, lang.is_active ? {} : { color: Colors.error }]}>{lang.is_active ? 'Active' : 'Inactive'}</Text>
                 </View>
               </View>
             ))}
           </>
         )}
 
-        {/* Shop Tab */}
+        {/* ==================== QR CODES TAB ==================== */}
+        {activeTab === 'qrcodes' && (
+          <>
+            <Text style={styles.sectionTitle}>QR Codes for Printing</Text>
+            <Text style={styles.qrInfo}>Each QR code links visitors to the tour stop. Print and place at physical locations.</Text>
+
+            {qrCodes.map((qr) => (
+              <View key={qr.stop_id} style={styles.qrCard}>
+                <View style={styles.qrCardHeader}>
+                  <View style={styles.qrStopBadge}>
+                    <Text style={styles.qrStopBadgeText}>
+                      {qr.stop_type === 'legend' ? 'Legend' : `Stop ${qr.stop_number}`}
+                    </Text>
+                  </View>
+                  <Text style={styles.qrCardTitle} numberOfLines={1}>{qr.title}</Text>
+                </View>
+                <View style={styles.qrImageContainer}>
+                  <Image
+                    source={{ uri: getQrImageUrl(qr.qr_code_id) }}
+                    style={styles.qrImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.qrCodeText}>Code: {qr.qr_code_id}</Text>
+                <Text style={styles.qrTargetText} numberOfLines={1}>Target: {qr.target_url}</Text>
+              </View>
+            ))}
+          </>
+        )}
+
+        {/* ==================== SHOP TAB ==================== */}
         {activeTab === 'shop' && (
           <>
             <View style={styles.shopHeader}>
@@ -408,7 +504,7 @@ export default function AdminDashboard() {
             <View style={[styles.shopHeader, { marginTop: 20 }]}>
               <Text style={styles.sectionTitle}>Products ({shopProducts.length})</Text>
               <Pressable style={styles.addProductBtn} onPress={openNewProduct}>
-                <Ionicons name="add" size={20} color={Colors.black} />
+                <Ionicons name="add" size={20} color={Colors.white} />
                 <Text style={styles.addProductText}>Add</Text>
               </Pressable>
             </View>
@@ -433,14 +529,14 @@ export default function AdminDashboard() {
         )}
       </ScrollView>
 
-      {/* Edit Stop Modal */}
+      {/* ==================== EDIT STOP MODAL ==================== */}
       <Modal visible={showEditModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit Translation</Text>
               <Pressable onPress={() => setShowEditModal(false)}>
-                <Ionicons name="close" size={24} color={Colors.white} />
+                <Ionicons name="close" size={24} color={Colors.text.primary} />
               </Pressable>
             </View>
             <Text style={styles.modalSubtitle}>
@@ -455,20 +551,20 @@ export default function AdminDashboard() {
               <TextInput style={[styles.modalInput, styles.modalTextarea]} value={editDescription} onChangeText={setEditDescription} multiline numberOfLines={8} placeholderTextColor={Colors.text.light} />
             </ScrollView>
             <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveStopEdit} disabled={saving}>
-              {saving ? <ActivityIndicator color={Colors.black} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
+              {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
             </Pressable>
           </View>
         </View>
       </Modal>
 
-      {/* Settings Edit Modal */}
+      {/* ==================== SETTINGS EDIT MODAL ==================== */}
       <Modal visible={showSettingsModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit Site Settings</Text>
               <Pressable onPress={() => setShowSettingsModal(false)}>
-                <Ionicons name="close" size={24} color={Colors.white} />
+                <Ionicons name="close" size={24} color={Colors.text.primary} />
               </Pressable>
             </View>
             <ScrollView style={styles.modalScroll}>
@@ -478,22 +574,55 @@ export default function AdminDashboard() {
               <TextInput style={styles.modalInput} value={editSubtitle} onChangeText={setEditSubtitle} placeholderTextColor={Colors.text.light} />
               <Text style={styles.label}>Welcome Description</Text>
               <TextInput style={[styles.modalInput, styles.modalTextarea]} value={editWelcome} onChangeText={setEditWelcome} multiline numberOfLines={6} placeholderTextColor={Colors.text.light} />
+              <Text style={styles.label}>Hero Image URL</Text>
+              <TextInput style={styles.modalInput} value={editHeroImage} onChangeText={setEditHeroImage} placeholderTextColor={Colors.text.light} placeholder="https://..." />
+              <Text style={styles.label}>Logo URL</Text>
+              <TextInput style={styles.modalInput} value={editLogoUrl} onChangeText={setEditLogoUrl} placeholderTextColor={Colors.text.light} placeholder="https://..." />
             </ScrollView>
             <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveSettings} disabled={saving}>
-              {saving ? <ActivityIndicator color={Colors.black} /> : <Text style={styles.saveBtnText}>Save Settings</Text>}
+              {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>Save Settings</Text>}
             </Pressable>
           </View>
         </View>
       </Modal>
 
-      {/* Product Edit Modal */}
+      {/* ==================== IMAGE URL EDIT MODAL ==================== */}
+      <Modal visible={showImageModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Stop Image</Text>
+              <Pressable onPress={() => setShowImageModal(false)}>
+                <Ionicons name="close" size={24} color={Colors.text.primary} />
+              </Pressable>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              {imageEditStop?.stop_type === 'legend' ? 'Legend' : `Stop ${imageEditStop?.stop_number}`}
+            </Text>
+            {editImageUrl ? (
+              <View style={styles.imagePreview}>
+                <Image source={{ uri: getFullUrl(editImageUrl) }} style={styles.imagePreviewImg} resizeMode="cover" />
+              </View>
+            ) : null}
+            <ScrollView style={styles.modalScroll}>
+              <Text style={styles.label}>Image URL</Text>
+              <TextInput style={styles.modalInput} value={editImageUrl} onChangeText={setEditImageUrl} placeholderTextColor={Colors.text.light} placeholder="https://... or /api/uploads/images/..." />
+            </ScrollView>
+            <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveImageUrl} disabled={saving}>
+              {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>Save Image</Text>}
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ==================== PRODUCT EDIT MODAL ==================== */}
       <Modal visible={showProductModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{editingProduct ? 'Edit Product' : 'New Product'}</Text>
               <Pressable onPress={() => setShowProductModal(false)}>
-                <Ionicons name="close" size={24} color={Colors.white} />
+                <Ionicons name="close" size={24} color={Colors.text.primary} />
               </Pressable>
             </View>
             <ScrollView style={styles.modalScroll}>
@@ -503,24 +632,24 @@ export default function AdminDashboard() {
               <TextInput style={[styles.modalInput, styles.modalTextarea]} value={productDesc} onChangeText={setProductDesc} multiline placeholderTextColor={Colors.text.light} placeholder="Product description" />
               <Text style={styles.label}>Price (EUR)</Text>
               <TextInput style={styles.modalInput} value={productPrice} onChangeText={setProductPrice} keyboardType="decimal-pad" placeholderTextColor={Colors.text.light} placeholder="0.00" />
-              <Text style={styles.label}>Icon (home, shield, book, images, gift, flash, cart)</Text>
+              <Text style={styles.label}>Icon (gift, home, shield, book, images, flash, cart)</Text>
               <TextInput style={styles.modalInput} value={productIcon} onChangeText={setProductIcon} placeholderTextColor={Colors.text.light} />
             </ScrollView>
             <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveProduct} disabled={saving}>
-              {saving ? <ActivityIndicator color={Colors.black} /> : <Text style={styles.saveBtnText}>{editingProduct ? 'Update Product' : 'Create Product'}</Text>}
+              {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{editingProduct ? 'Update Product' : 'Create Product'}</Text>}
             </Pressable>
           </View>
         </View>
       </Modal>
 
-      {/* Shop Settings Edit Modal */}
+      {/* ==================== SHOP SETTINGS EDIT MODAL ==================== */}
       <Modal visible={showShopSettingsModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit Shop Settings</Text>
               <Pressable onPress={() => setShowShopSettingsModal(false)}>
-                <Ionicons name="close" size={24} color={Colors.white} />
+                <Ionicons name="close" size={24} color={Colors.text.primary} />
               </Pressable>
             </View>
             <ScrollView style={styles.modalScroll}>
@@ -534,7 +663,7 @@ export default function AdminDashboard() {
               <TextInput style={styles.modalInput} value={shopLocation} onChangeText={setShopLocation} placeholderTextColor={Colors.text.light} />
             </ScrollView>
             <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveShopSettings} disabled={saving}>
-              {saving ? <ActivityIndicator color={Colors.black} /> : <Text style={styles.saveBtnText}>Save Shop Settings</Text>}
+              {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>Save Shop Settings</Text>}
             </Pressable>
           </View>
         </View>
@@ -551,59 +680,88 @@ const styles = StyleSheet.create({
   logoutBtn: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
   tabs: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 12 },
   tabsScroll: { maxHeight: 48, marginBottom: 4 },
-  tab: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: Colors.backgroundLight, alignItems: 'center' },
-  tabActive: { backgroundColor: Colors.accent },
+  tab: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: Colors.white, alignItems: 'center', borderWidth: 1, borderColor: Colors.borderLight },
+  tabActive: { backgroundColor: Colors.accent, borderColor: Colors.accent },
   tabText: { fontSize: 13, fontWeight: '700', color: Colors.text.secondary },
-  tabTextActive: { color: Colors.black },
+  tabTextActive: { color: Colors.white },
   scrollContent: { flex: 1 },
   scrollContentInner: { paddingHorizontal: 16, paddingBottom: 32 },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: Colors.accent, marginBottom: 12 },
-  stopCard: { backgroundColor: Colors.backgroundLight, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: Colors.borderLight },
+
+  // Tour Stop Cards
+  stopCard: { backgroundColor: Colors.white, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: Colors.borderLight },
   stopCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  stopNum: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,215,0,0.2)', justifyContent: 'center', alignItems: 'center' },
+  stopNum: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FFF3CD', justifyContent: 'center', alignItems: 'center' },
   stopNumText: { fontSize: 13, fontWeight: '800', color: Colors.accent },
-  stopCardTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: Colors.white },
+  stopCardTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: Colors.text.primary },
   stopCardInfo: { fontSize: 12, color: Colors.text.light, marginBottom: 8 },
+  imageEditBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FFF3CD', justifyContent: 'center', alignItems: 'center' },
   langBtns: { flexDirection: 'row' },
-  langBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.05)', marginRight: 6, borderWidth: 1, borderColor: Colors.borderLight },
-  langBtnActive: { borderColor: Colors.accent, backgroundColor: 'rgba(255,215,0,0.1)' },
-  langBtnText: { fontSize: 12, color: Colors.white, fontWeight: '600' },
-  settingsCard: { backgroundColor: Colors.backgroundLight, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: Colors.borderLight },
+  langBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#F5F5F5', marginRight: 6, borderWidth: 1, borderColor: Colors.borderLight },
+  langBtnActive: { borderColor: Colors.accent, backgroundColor: '#FFF8E1' },
+  langBtnText: { fontSize: 12, color: Colors.text.primary, fontWeight: '600' },
+
+  // Settings
+  settingsCard: { backgroundColor: Colors.white, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: Colors.borderLight },
   settingsLabel: { fontSize: 12, color: Colors.text.light, marginTop: 12 },
-  settingsValue: { fontSize: 15, color: Colors.white, fontWeight: '600', marginTop: 4 },
+  settingsValue: { fontSize: 15, color: Colors.text.primary, fontWeight: '600', marginTop: 4 },
+  heroPreview: { height: 160, borderRadius: 14, overflow: 'hidden', marginBottom: 16, position: 'relative' },
+  heroPreviewImage: { width: '100%', height: '100%' },
+  heroPreviewOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.4)', padding: 8 },
+  heroPreviewText: { color: '#fff', fontSize: 12, fontWeight: '700', textAlign: 'center' },
   editSettingsBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.accent, borderRadius: 12, paddingVertical: 12, marginTop: 20, gap: 8 },
-  editSettingsBtnText: { fontSize: 15, fontWeight: '700', color: Colors.black },
-  langCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.backgroundLight, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: Colors.borderLight },
+  editSettingsBtnText: { fontSize: 15, fontWeight: '700', color: Colors.white },
+
+  // Languages
+  langCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: Colors.borderLight },
   langFlag: { fontSize: 28, marginRight: 12 },
   langInfo: { flex: 1 },
-  langName: { fontSize: 16, fontWeight: '700', color: Colors.white },
+  langName: { fontSize: 16, fontWeight: '700', color: Colors.text.primary },
   langCode: { fontSize: 12, color: Colors.text.light, marginTop: 2 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  statusActive: { backgroundColor: 'rgba(76,175,80,0.2)' },
-  statusInactive: { backgroundColor: 'rgba(255,82,82,0.2)' },
+  statusActive: { backgroundColor: 'rgba(76,175,80,0.15)' },
+  statusInactive: { backgroundColor: 'rgba(255,82,82,0.15)' },
   statusText: { fontSize: 12, fontWeight: '700', color: Colors.success },
-  // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+
+  // QR Codes
+  qrInfo: { fontSize: 13, color: Colors.text.secondary, marginBottom: 16, lineHeight: 20 },
+  qrCard: { backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 16, alignItems: 'center', borderWidth: 1, borderColor: Colors.borderLight },
+  qrCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12, width: '100%' },
+  qrStopBadge: { backgroundColor: Colors.accent, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  qrStopBadgeText: { fontSize: 12, fontWeight: '800', color: Colors.white },
+  qrCardTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: Colors.text.primary },
+  qrImageContainer: { backgroundColor: '#fff', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E0E0E0', marginBottom: 8 },
+  qrImage: { width: 180, height: 180 },
+  qrCodeText: { fontSize: 14, fontWeight: '700', color: Colors.accent, marginTop: 4, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  qrTargetText: { fontSize: 11, color: Colors.text.light, marginTop: 4 },
+
+  // Shop Admin
+  shopHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  editShopBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFF3CD', justifyContent: 'center', alignItems: 'center' },
+  addProductBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.accent, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, gap: 4 },
+  addProductText: { fontSize: 13, fontWeight: '700', color: Colors.white },
+  productAdminCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: Colors.borderLight },
+  productAdminInfo: { flex: 1 },
+  productAdminName: { fontSize: 15, fontWeight: '700', color: Colors.text.primary },
+  productAdminPrice: { fontSize: 14, fontWeight: '800', color: Colors.accent, marginTop: 2 },
+  productAdminDesc: { fontSize: 12, color: Colors.text.light, marginTop: 2 },
+  productActions: { flexDirection: 'row', gap: 8 },
+  productActionBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center' },
+
+  // Modals
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: Colors.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '85%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   modalTitle: { fontSize: 20, fontWeight: '800', color: Colors.accent },
   modalSubtitle: { fontSize: 14, color: Colors.text.secondary, marginBottom: 16 },
   modalScroll: { maxHeight: 400 },
   label: { fontSize: 13, fontWeight: '600', color: Colors.text.secondary, marginTop: 12, marginBottom: 4 },
-  modalInput: { backgroundColor: Colors.backgroundLight, borderRadius: 12, padding: 14, fontSize: 15, color: Colors.white, borderWidth: 1, borderColor: Colors.borderLight },
+  modalInput: { backgroundColor: Colors.white, borderRadius: 12, padding: 14, fontSize: 15, color: Colors.text.primary, borderWidth: 1, borderColor: Colors.borderLight },
   modalTextarea: { minHeight: 120, textAlignVertical: 'top' },
   saveBtn: { backgroundColor: Colors.accent, borderRadius: 16, paddingVertical: 14, alignItems: 'center', marginTop: 16 },
-  saveBtnText: { fontSize: 16, fontWeight: '800', color: Colors.black },
-  // Shop admin styles
-  shopHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  editShopBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,215,0,0.15)', justifyContent: 'center', alignItems: 'center' },
-  addProductBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.accent, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, gap: 4 },
-  addProductText: { fontSize: 13, fontWeight: '700', color: Colors.black },
-  productAdminCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.backgroundLight, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: Colors.borderLight },
-  productAdminInfo: { flex: 1 },
-  productAdminName: { fontSize: 15, fontWeight: '700', color: Colors.white },
-  productAdminPrice: { fontSize: 14, fontWeight: '800', color: Colors.accent, marginTop: 2 },
-  productAdminDesc: { fontSize: 12, color: Colors.text.light, marginTop: 2 },
-  productActions: { flexDirection: 'row', gap: 8 },
-  productActionBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
+  saveBtnText: { fontSize: 16, fontWeight: '800', color: Colors.white },
+
+  // Image Preview
+  imagePreview: { height: 140, borderRadius: 12, overflow: 'hidden', marginBottom: 8 },
+  imagePreviewImg: { width: '100%', height: '100%' },
 });

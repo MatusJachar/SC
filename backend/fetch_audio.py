@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent
 AUDIO_DIR = ROOT_DIR / "uploads" / "audio"
-BASE_URL = "https://audio-tour-cache.preview.emergentagent.com"
+BASE_URL = "https://spis-audio-explore.preview.emergentagent.com"
 
 def try_fetch_audio():
     print("=" * 60)
