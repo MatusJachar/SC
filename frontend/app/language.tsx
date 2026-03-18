@@ -5,8 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { API_BASE_URL } from '../constants/api';
 
-// Flag image URLs from a CDN (reliable cross-platform rendering)
+const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
+
+// Flag images from CDN
 const FLAG_IMAGES: Record<string, string> = {
   sk: 'https://flagcdn.com/w80/sk.png',
   en: 'https://flagcdn.com/w80/gb.png',
@@ -30,48 +33,50 @@ export default function LanguageScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Choose Language</Text>
-        <View style={{ width: 44 }} />
-      </View>
-      <Text style={styles.subtitle}>Select your preferred language</Text>
+    <View style={styles.container}>
+      {/* Background */}
+      <Image source={{ uri: CASTLE_IMAGE }} style={styles.bgImage} resizeMode="cover" blurRadius={Platform.OS === 'web' ? 0 : 4} />
+      <View style={styles.bgOverlay} />
 
-      {/* Language List */}
       <ScrollView
-        style={styles.listContainer}
-        contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 20 }]}
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header */}
+        <View style={styles.header}>
+          <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </Pressable>
+        </View>
+
+        {/* Globe Icon */}
+        <View style={styles.iconContainer}>
+          <Ionicons name="globe" size={36} color="#D4A017" />
+        </View>
+
+        <Text style={styles.title}>Choose Language</Text>
+        <Text style={styles.subtitle}>Select your preferred language</Text>
+
+        {/* Language List */}
         {languages.map((lang) => (
           <Pressable
             key={lang.code}
-            style={({ pressed }) => [
-              styles.languageItem,
-              pressed && styles.languageItemPressed,
-            ]}
+            style={({ pressed }) => [styles.langCard, pressed && styles.langCardPressed]}
             onPress={() => handleLanguageSelect(lang.code)}
           >
             <View style={styles.flagContainer}>
               {FLAG_IMAGES[lang.code] ? (
-                <Image
-                  source={{ uri: FLAG_IMAGES[lang.code] }}
-                  style={styles.flagImage}
-                  resizeMode="cover"
-                />
+                <Image source={{ uri: FLAG_IMAGES[lang.code] }} style={styles.flagImage} resizeMode="cover" />
               ) : (
                 <Text style={styles.flagEmoji}>{lang.flag_emoji}</Text>
               )}
             </View>
-            <View style={styles.languageInfo}>
-              <Text style={styles.languageName}>{lang.native_name}</Text>
-              <Text style={styles.languageNameEn}>{lang.name}</Text>
+            <View style={styles.langInfo}>
+              <Text style={styles.langName}>{lang.native_name}</Text>
+              <Text style={styles.langNameEn}>{lang.name}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={Colors.text.light} />
+            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.4)" />
           </Pressable>
         ))}
       </ScrollView>
@@ -80,86 +85,45 @@ export default function LanguageScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  header: {
+  container: { flex: 1, backgroundColor: '#1A1A2E' },
+  bgImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  bgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20, 20, 40, 0.75)' },
+  scrollView: { flex: 1, zIndex: 1 },
+  scrollContent: { paddingHorizontal: 20 },
+
+  header: { flexDirection: 'row', marginBottom: 12 },
+  backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center' },
+
+  iconContainer: { alignSelf: 'center', marginBottom: 8 },
+  title: { fontSize: 30, fontWeight: '800', color: '#fff', textAlign: 'center', marginBottom: 4 },
+  subtitle: { fontSize: 15, color: 'rgba(255,255,255,0.6)', textAlign: 'center', marginBottom: 24 },
+
+  langCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.text.primary,
-  },
-  subtitle: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: Colors.text.light,
-    marginBottom: 8,
-  },
-  listContainer: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  languageItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: 14,
+    backgroundColor: 'rgba(30, 30, 55, 0.88)',
+    borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
-  languageItemPressed: {
-    backgroundColor: '#FFF8E1',
-  },
+  langCardPressed: { backgroundColor: 'rgba(40, 40, 70, 0.95)', borderColor: 'rgba(212,160,23,0.3)' },
+
   flagContainer: {
-    width: 42,
-    height: 30,
-    borderRadius: 4,
+    width: 48,
+    height: 34,
+    borderRadius: 6,
     overflow: 'hidden',
     marginRight: 14,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  flagImage: {
-    width: 42,
-    height: 30,
-    borderRadius: 4,
-  },
-  flagEmoji: {
-    fontSize: 28,
-  },
-  languageInfo: {
-    flex: 1,
-  },
-  languageName: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: Colors.text.primary,
-  },
-  languageNameEn: {
-    fontSize: 13,
-    color: Colors.text.light,
-    marginTop: 2,
-  },
+  flagImage: { width: 48, height: 34, borderRadius: 6 },
+  flagEmoji: { fontSize: 28 },
+
+  langInfo: { flex: 1 },
+  langName: { fontSize: 17, fontWeight: '700', color: '#fff' },
+  langNameEn: { fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
 });

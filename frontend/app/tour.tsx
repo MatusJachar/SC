@@ -1,214 +1,250 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import { TourStop } from '../types';
+import { API_BASE_URL } from '../constants/api';
+
+const { width } = Dimensions.get('window');
+const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
+
+// Tour type definitions (matching tour-select.tsx)
+const TOUR_DEFS: Record<string, { stops: number[]; legends: number[] }> = {
+  express: { stops: [1, 2, 3, 7, 8, 11, 12], legends: [3] },
+  family: { stops: [1, 2, 4, 8, 9, 11, 12], legends: [1, 4] },
+  complete: { stops: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], legends: [1, 2, 3, 4] },
+};
+
+// Unique icon for each stop number
+const STOP_ICONS: Record<number, { icon: string; bg: string }> = {
+  1:  { icon: 'flag', bg: '#4CAF50' },
+  2:  { icon: 'camera', bg: '#2196F3' },
+  3:  { icon: 'cube', bg: '#9C27B0' },
+  4:  { icon: 'restaurant', bg: '#FF5722' },
+  5:  { icon: 'layers', bg: '#009688' },
+  6:  { icon: 'git-branch', bg: '#795548' },
+  7:  { icon: 'trending-up', bg: '#3F51B5' },
+  8:  { icon: 'grid', bg: '#607D8B' },
+  9:  { icon: 'skull', bg: '#E91E63' },
+  10: { icon: 'home', bg: '#FF9800' },
+  11: { icon: 'telescope', bg: '#00BCD4' },
+  12: { icon: 'business', bg: '#8BC34A' },
+  13: { icon: 'eye', bg: '#FFC107' },
+};
 
 export default function TourScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { tourType, stopRange, includesLegends } = useLocalSearchParams<{
-    tourType: string;
-    stopRange: string;
-    includesLegends: string;
-  }>();
-  const { tourStops, legends, selectedLanguage } = useApp();
+  const { tourStops, legends, selectedLanguage, selectedTourType } = useApp();
 
-  const allowedStops = useMemo(() => {
-    try { return JSON.parse(stopRange || '[]') as number[]; } catch { return []; }
-  }, [stopRange]);
+  const tourDef = useMemo(() => TOUR_DEFS[selectedTourType] || TOUR_DEFS.complete, [selectedTourType]);
 
   const filteredStops = useMemo(() => {
-    if (allowedStops.length === 0) return tourStops;
-    return tourStops.filter(s => allowedStops.includes(s.stop_number));
-  }, [tourStops, allowedStops]);
+    return tourStops
+      .filter(s => tourDef.stops.includes(s.stop_number))
+      .sort((a, b) => a.stop_number - b.stop_number);
+  }, [tourStops, tourDef]);
 
-  const showLegends = includesLegends === 'true';
+  const filteredLegends = useMemo(() => {
+    return legends
+      .filter(l => tourDef.legends.includes(l.stop_number))
+      .sort((a, b) => a.stop_number - b.stop_number);
+  }, [legends, tourDef]);
 
-  const getTranslation = (stop: TourStop) => {
-    return stop.translations.find(t => t.language_code === selectedLanguage)
-      || stop.translations.find(t => t.language_code === 'en')
+  const getTranslation = (stop: any) => {
+    return stop.translations.find((t: any) => t.language_code === selectedLanguage)
+      || stop.translations.find((t: any) => t.language_code === 'en')
       || stop.translations[0];
   };
 
-  const navigateToStop = (stop: TourStop) => {
-    router.push({ pathname: '/tour/[id]', params: { id: stop.id } });
-  };
-
-  const tourTypeNames: Record<string, string> = {
-    express: 'Express Tour', family: 'Family Tour', complete: 'Complete Tour',
-  };
+  const tourLabel = selectedTourType === 'express' ? 'Express Tour' :
+                    selectedTourType === 'family' ? 'Family Tour' : 'Complete Tour';
+  const tourColor = selectedTourType === 'express' ? '#FF6B35' :
+                    selectedTourType === 'family' ? '#4ECDC4' : '#D4A017';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={styles.container}>
+      {/* Background */}
+      <Image source={{ uri: CASTLE_IMAGE }} style={styles.bgImage} resizeMode="cover" blurRadius={Platform.OS === 'web' ? 0 : 5} />
+      <View style={styles.bgOverlay} />
+
       {/* Header */}
-      <View style={styles.headerRow}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+          <Ionicons name="arrow-back" size={22} color="#fff" />
         </Pressable>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{tourTypeNames[tourType || 'complete'] || 'Tour'}</Text>
-          <Text style={styles.headerSubtitle}>{filteredStops.length} stops{showLegends ? ` + ${legends.length} legends` : ''}</Text>
+        <View style={[styles.tourBadge, { backgroundColor: tourColor }]}>
+          <Text style={styles.tourBadgeText}>{tourLabel}</Text>
         </View>
         <View style={{ width: 44 }} />
       </View>
 
-      <ScrollView style={styles.listContainer} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
-        {/* Tour Stops */}
-        {filteredStops.map((stop) => {
-          const translation = getTranslation(stop);
-          const hasAudio = !!translation?.audio_url;
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 24 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Tour Stops Section */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name="navigate" size={18} color="#D4A017" />
+          <Text style={styles.sectionTitle}>Tour Stops</Text>
+          <Text style={styles.sectionCount}>{filteredStops.length}</Text>
+        </View>
+
+        {filteredStops.map((stop, index) => {
+          const trans = getTranslation(stop);
+          const iconDef = STOP_ICONS[stop.stop_number] || { icon: 'location', bg: '#666' };
+          const hasAudio = !!trans?.audio_url;
+
           return (
             <Pressable
               key={stop.id}
               style={({ pressed }) => [styles.stopCard, pressed && styles.stopCardPressed]}
-              onPress={() => navigateToStop(stop)}
+              onPress={() => router.push(`/tour/${stop.id}`)}
             >
-              <View style={styles.stopNumber}>
-                <Text style={styles.stopNumberText}>{stop.stop_number}</Text>
+              {/* Left Icon */}
+              <View style={[styles.stopIcon, { backgroundColor: iconDef.bg }]}>
+                <Ionicons name={iconDef.icon as any} size={20} color="#1A1A2E" />
               </View>
-              <View style={styles.stopInfo}>
-                <Text style={styles.stopTitle} numberOfLines={1}>{translation?.title || 'Stop ' + stop.stop_number}</Text>
-                <Text style={styles.stopDesc} numberOfLines={2}>{translation?.short_description || ''}</Text>
+
+              {/* Content */}
+              <View style={styles.stopContent}>
+                <View style={styles.stopTopRow}>
+                  <Text style={styles.stopNumber}>#{stop.stop_number}</Text>
+                  {hasAudio && (
+                    <View style={styles.audioBadge}>
+                      <Ionicons name="headset" size={10} color="#D4A017" />
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.stopTitle} numberOfLines={1}>{trans?.title || 'Tour Stop'}</Text>
+                <Text style={styles.stopDesc} numberOfLines={2}>{trans?.short_description || trans?.description || ''}</Text>
               </View>
-              <View style={styles.stopIcons}>
-                {hasAudio && <Ionicons name="headset" size={16} color={Colors.accent} />}
-                <Ionicons name="chevron-forward" size={18} color={Colors.text.light} />
+
+              {/* Play indicator */}
+              <View style={styles.playIcon}>
+                <Ionicons name="play" size={16} color="#D4A017" />
               </View>
             </Pressable>
           );
         })}
 
         {/* Legends Section */}
-        {showLegends && legends.length > 0 && (
+        {filteredLegends.length > 0 && (
           <>
-            <View style={styles.legendDivider}>
-              <View style={styles.dividerLine} />
-              <Ionicons name="book" size={20} color={Colors.accent} />
-              <Text style={styles.sectionTitleLegend}>Legends</Text>
-              <View style={styles.dividerLine} />
+            <View style={[styles.sectionHeader, { marginTop: 28 }]}>
+              <Ionicons name="book" size={18} color="#D4A017" />
+              <Text style={styles.sectionTitle}>Legends</Text>
+              <Text style={styles.sectionCount}>{filteredLegends.length}</Text>
             </View>
-            {legends.map((legend) => {
-              const translation = getTranslation(legend);
+
+            {filteredLegends.map((legend) => {
+              const trans = getTranslation(legend);
+              const hasAudio = !!trans?.audio_url;
+
               return (
                 <Pressable
                   key={legend.id}
-                  style={({ pressed }) => [styles.stopCard, pressed && styles.stopCardPressed]}
-                  onPress={() => navigateToStop(legend)}
+                  style={({ pressed }) => [styles.legendCard, pressed && styles.legendCardPressed]}
+                  onPress={() => router.push(`/tour/${legend.id}`)}
                 >
+                  {/* Left Book Icon */}
                   <View style={styles.legendIcon}>
-                    <Ionicons name="book" size={18} color={Colors.accent} />
+                    <Ionicons name="book" size={22} color="#1A1A2E" />
                   </View>
-                  <View style={styles.stopInfo}>
-                    <Text style={styles.stopTitle} numberOfLines={1}>{translation?.title || 'Legend'}</Text>
-                    <Text style={styles.stopDesc} numberOfLines={2}>{translation?.short_description || ''}</Text>
+
+                  {/* Content */}
+                  <View style={styles.legendContent}>
+                    <Text style={styles.legendTitle} numberOfLines={1}>{trans?.title || 'Legend'}</Text>
+                    <Text style={styles.legendDesc} numberOfLines={2}>{trans?.short_description || trans?.description || ''}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color={Colors.text.light} />
+
+                  {/* Right Book Icon / Audio */}
+                  <View style={styles.legendRight}>
+                    {hasAudio && <Ionicons name="book" size={20} color="#D4A017" />}
+                  </View>
                 </Pressable>
               );
             })}
           </>
         )}
-
-        {/* Extra Features */}
-        <View style={styles.extraSection}>
-          <Text style={styles.sectionTitle}>More</Text>
-
-          <Pressable style={styles.extraCard} onPress={() => router.push('/features/info')}>
-            <View style={[styles.extraIcon, { backgroundColor: '#4CAF50' }]}>
-              <Ionicons name="information-circle" size={20} color={Colors.white} />
-            </View>
-            <View style={styles.extraInfo}>
-              <Text style={styles.extraTitle}>Visitor Information</Text>
-              <Text style={styles.extraDesc}>Prices, hours, transport & more</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.text.light} />
-          </Pressable>
-
-          <Pressable style={styles.extraCard} onPress={() => router.push('/features/video')}>
-            <View style={[styles.extraIcon, { backgroundColor: '#E91E63' }]}>
-              <Ionicons name="videocam" size={20} color={Colors.white} />
-            </View>
-            <View style={styles.extraInfo}>
-              <Text style={styles.extraTitle}>Video Gallery</Text>
-              <Text style={styles.extraDesc}>Watch castle documentaries</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.text.light} />
-          </Pressable>
-
-          <Pressable style={styles.extraCard} onPress={() => router.push('/features/vr')}>
-            <View style={[styles.extraIcon, { backgroundColor: '#9C27B0' }]}>
-              <Ionicons name="glasses" size={20} color={Colors.white} />
-            </View>
-            <View style={styles.extraInfo}>
-              <Text style={styles.extraTitle}>VR Experience</Text>
-              <Text style={styles.extraDesc}>Virtual reality castle tour</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.text.light} />
-          </Pressable>
-
-          <Pressable style={styles.extraCard} onPress={() => router.push('/features/shop')}>
-            <View style={[styles.extraIcon, { backgroundColor: '#FF9800' }]}>
-              <Ionicons name="bag-handle" size={20} color={Colors.white} />
-            </View>
-            <View style={styles.extraInfo}>
-              <Text style={styles.extraTitle}>Souvenir Shop</Text>
-              <Text style={styles.extraDesc}>Castle memorabilia & gifts</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.text.light} />
-          </Pressable>
-
-          <Pressable style={styles.extraCard} onPress={() => router.push('/features/nearby')}>
-            <View style={[styles.extraIcon, { backgroundColor: '#2196F3' }]}>
-              <Ionicons name="compass" size={20} color={Colors.white} />
-            </View>
-            <View style={styles.extraInfo}>
-              <Text style={styles.extraTitle}>What's Nearby</Text>
-              <Text style={styles.extraDesc}>Restaurants, parking & transport</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.text.light} />
-          </Pressable>
-        </View>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  headerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
-  backButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
-  headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: Colors.text.primary },
-  headerSubtitle: { fontSize: 12, color: Colors.text.light, marginTop: 2 },
-  listContainer: { flex: 1 },
-  listContent: { paddingHorizontal: 16, paddingBottom: 32, gap: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: Colors.text.primary, marginTop: 16, marginBottom: 10 },
+  container: { flex: 1, backgroundColor: '#1A1A2E' },
+  bgImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+  bgOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20, 20, 40, 0.65)' },
+
+  // Header
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 12, zIndex: 2 },
+  backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center' },
+  tourBadge: { flex: 1, alignSelf: 'center', marginHorizontal: 12, paddingVertical: 6, paddingHorizontal: 16, borderRadius: 12, alignItems: 'center' },
+  tourBadgeText: { fontSize: 14, fontWeight: '800', color: '#1A1A2E' },
+
+  scrollView: { flex: 1, zIndex: 1 },
+  scrollContent: { paddingHorizontal: 16 },
+
+  // Section Headers
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14, marginTop: 4 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#fff' },
+  sectionCount: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.4)', marginLeft: 'auto' },
+
+  // Tour Stop Cards
   stopCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 14, padding: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 30, 55, 0.88)',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
-  stopCardPressed: { backgroundColor: '#FFF8E1' },
-  stopNumber: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#FFF3CD', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  stopNumberText: { fontSize: 15, fontWeight: '800', color: Colors.accent },
-  legendIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#FFF3CD', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  stopInfo: { flex: 1 },
-  stopTitle: { fontSize: 15, fontWeight: '600', color: Colors.text.primary },
-  stopDesc: { fontSize: 12, color: Colors.text.light, marginTop: 2 },
-  stopIcons: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 },
-  legendDivider: { flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 10, gap: 8 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: Colors.borderLight },
-  sectionTitleLegend: { fontSize: 14, fontWeight: '700', color: Colors.accent, letterSpacing: 1 },
-  extraSection: { marginTop: 8 },
-  extraCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 14, padding: 14, marginBottom: 8,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+  stopCardPressed: { backgroundColor: 'rgba(40, 40, 70, 0.95)', borderColor: 'rgba(212,160,23,0.3)' },
+  stopIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  extraIcon: { width: 38, height: 38, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  extraInfo: { flex: 1 },
-  extraTitle: { fontSize: 14, fontWeight: '600', color: Colors.text.primary },
-  extraDesc: { fontSize: 12, color: Colors.text.light, marginTop: 2 },
+  stopContent: { flex: 1 },
+  stopTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  stopNumber: { fontSize: 11, fontWeight: '800', color: 'rgba(255,255,255,0.4)' },
+  audioBadge: { width: 18, height: 18, borderRadius: 9, backgroundColor: 'rgba(212,160,23,0.2)', justifyContent: 'center', alignItems: 'center' },
+  stopTitle: { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 3 },
+  stopDesc: { fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 17 },
+  playIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(212,160,23,0.15)', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
+
+  // Legend Cards
+  legendCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(40, 35, 20, 0.88)',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(212,160,23,0.15)',
+  },
+  legendCardPressed: { backgroundColor: 'rgba(50, 45, 30, 0.95)', borderColor: 'rgba(212,160,23,0.4)' },
+  legendIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#D4A017',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  legendContent: { flex: 1 },
+  legendTitle: { fontSize: 16, fontWeight: '800', color: '#fff', marginBottom: 3 },
+  legendDesc: { fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 17 },
+  legendRight: { marginLeft: 8 },
 });

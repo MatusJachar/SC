@@ -44,6 +44,10 @@ interface AppContextType {
   isOfflineMode: boolean;
   setOfflineMode: (offline: boolean) => void;
   
+  // Tour type
+  selectedTourType: string;
+  setSelectedTourType: (type: string) => void;
+  
   // QR Code
   getStopByQRCode: (qrCode: string) => Promise<TourStop | null>;
 }
@@ -68,6 +72,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [legends, setLegends] = useState<TourStop[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
+  
+  // Tour type
+  const [selectedTourType, setSelectedTourType] = useState<string>('complete');
   
   // Main audio state
   const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -363,6 +370,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         loadData,
         isOfflineMode,
         setOfflineMode,
+        selectedTourType,
+        setSelectedTourType,
         getStopByQRCode,
       }}
     >
