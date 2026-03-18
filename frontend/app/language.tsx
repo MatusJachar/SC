@@ -1,10 +1,23 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+
+// Flag image URLs from a CDN (reliable cross-platform rendering)
+const FLAG_IMAGES: Record<string, string> = {
+  sk: 'https://flagcdn.com/w80/sk.png',
+  en: 'https://flagcdn.com/w80/gb.png',
+  de: 'https://flagcdn.com/w80/de.png',
+  pl: 'https://flagcdn.com/w80/pl.png',
+  hu: 'https://flagcdn.com/w80/hu.png',
+  fr: 'https://flagcdn.com/w80/fr.png',
+  es: 'https://flagcdn.com/w80/es.png',
+  ru: 'https://flagcdn.com/w80/ru.png',
+  zh: 'https://flagcdn.com/w80/cn.png',
+};
 
 export default function LanguageScreen() {
   const router = useRouter();
@@ -43,7 +56,17 @@ export default function LanguageScreen() {
             ]}
             onPress={() => handleLanguageSelect(lang.code)}
           >
-            <Text style={styles.flag}>{lang.flag_emoji}</Text>
+            <View style={styles.flagContainer}>
+              {FLAG_IMAGES[lang.code] ? (
+                <Image
+                  source={{ uri: FLAG_IMAGES[lang.code] }}
+                  style={styles.flagImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={styles.flagEmoji}>{lang.flag_emoji}</Text>
+              )}
+            </View>
             <View style={styles.languageInfo}>
               <Text style={styles.languageName}>{lang.native_name}</Text>
               <Text style={styles.languageNameEn}>{lang.name}</Text>
@@ -108,9 +131,23 @@ const styles = StyleSheet.create({
   languageItemPressed: {
     backgroundColor: '#FFF8E1',
   },
-  flag: {
-    fontSize: 32,
+  flagContainer: {
+    width: 42,
+    height: 30,
+    borderRadius: 4,
+    overflow: 'hidden',
     marginRight: 14,
+    backgroundColor: '#F0F0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  flagImage: {
+    width: 42,
+    height: 30,
+    borderRadius: 4,
+  },
+  flagEmoji: {
+    fontSize: 28,
   },
   languageInfo: {
     flex: 1,

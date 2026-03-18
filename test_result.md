@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: Test the Castle Audio Guide backend API endpoints including health check, languages, tour stops, site settings, and offline package functionality.
+user_problem_statement: "Spiš Castle Audio Guide App - Complete verification needed. Test ALL features: admin panel (login, CRUD operations), tour stops (audio for all 17 stops in 9 languages), language selection with flags, souvenir shop (21 products), visitor info page, offline mode, QR codes."
 
 backend:
   - task: "Health Check Endpoint"
@@ -112,12 +112,39 @@ backend:
     stuck_count: 0
     priority: "high"
     needs_retesting: false
+
+  - task: "Languages API (9 Languages)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+
+  - task: "Tour Stops API (13 Tour + 4 Legends)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+
+  - task: "Audio Files for ALL 17 Stops in ALL 9 Languages (153 total)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
     status_history:
         - working: true
+          agent: "main"
+          comment: "All 153 audio files verified: 13 stops × 9 langs + 4 legends × 9 langs. Every DB URL matches a file on disk."
+        - working: true
           agent: "testing"
-          comment: "GET /api/health endpoint returns healthy status successfully with timestamp - ULTIMATE version confirmed working"
+          comment: "CRITICAL AUDIO VERIFICATION SUCCESSFUL: All 153 audio files (17 stops × 9 languages) confirmed accessible via HTTP 200 responses. Verified specific files from review request: stop1_sk.mp3, stop1_en.mp3, stop6_sk.mp3, stop13_zh.mp3, legend_1_sk.mp3, legend_4_hu.mp3. Database URLs correctly reference existing audio files. Complete multilingual audio support confirmed for all tour stops and legends in all 9 languages (sk,en,de,pl,hu,fr,es,ru,zh)."
 
-  - task: "Languages API Endpoint (9 Languages)"
+  - task: "Shop Products API (21 products)"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -127,9 +154,24 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "GET /api/languages returns exactly 9 languages (SK, EN, DE, PL, HU, FR, ES, RU, ZH) with correct structure including flag emojis 🇸🇰🇬🇧🇩🇪🇵🇱🇭🇺🇫🇷🇪🇸🇷🇺🇨🇳 and all required fields"
+          comment: "Shop Products API verification: GET /api/shop/products returns exactly 21 products as specified in review request. Products include authentic castle-themed items (fridge magnets, ceramic mugs, t-shirts, sweatshirts, etc.) with proper structure (name, price, currency EUR, icons, active status). All products properly seeded and accessible."
 
-  - task: "Tour Stops API Endpoint (12 Tour + 4 Legends)"
+  - task: "Admin Authentication"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Password reset. Login with admin/admin123 verified working."
+        - working: true
+          agent: "testing"
+          comment: "Admin authentication verification: POST /api/admin/login with credentials {username:'admin', password:'admin123'} returns valid JWT token with 7-day expiry (604800 seconds). Authentication working perfectly and provides access to all protected admin endpoints."
+
+  - task: "Admin CRUD Operations"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -139,55 +181,7 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "GET /api/tour-stops returns total 16+ stops correctly split: 12 tour stops (numbered 1-12) + 4 legends (numbered 101-104). All stops have translations in 9 languages and proper duration_seconds values. Filtering by stop_type works correctly"
-
-  - task: "Tour Stops Filtering"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/tour-stops?stop_type=tour returns exactly 12 tour stops, GET /api/tour-stops?stop_type=legend returns exactly 4 legends. Filtering works perfectly"
-
-  - task: "Site Settings API Endpoint"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/site-settings returns site settings with site_name 'Spišský Hrad' and all required fields including colors, descriptions, and branding"
-
-  - task: "Site Info Multilingual (9 Languages)"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/site-info?language={sk|en|zh|de|pl|hu|fr|es|ru} returns correct site information for all 9 languages with proper titles and descriptions. Slovak: 'Vitajte na Spišskom hrade', English: 'Welcome to Spiš Castle', Chinese: '斯皮什城堡'"
-
-  - task: "Offline Package API Endpoint"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/offline-package returns complete package with all 9 languages, 16+ tour stops, site info for all languages, version timestamp, and generation timestamp. Perfect for offline functionality"
+          comment: "Admin CRUD operations verification: All admin endpoints working with JWT authentication. GET /admin/me returns user info, GET /admin/tour-stops shows 17 stops, GET /admin/site-settings accessible, GET /admin/shop/products shows 21 products. All protected endpoints properly secured and functional."
 
   - task: "QR Code Generation"
     implemented: true
@@ -199,9 +193,21 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "GET /api/qr/code/{qr_code_id} generates PNG QR codes successfully. All tour stops and legends have unique QR code IDs. Returns proper image/png content-type. Physical QR code markers can be generated"
+          comment: "QR Code generation verification: GET /admin/qr-codes returns 17 QR codes (one for each tour stop and legend). QR code system fully functional with proper IDs, target URLs, and image generation capabilities. All codes properly linked to tour stops."
 
-  - task: "Audio URLs for Stops 1-7"
+  - task: "Offline Package"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Offline Package verification: GET /api/offline-package returns complete data package containing 9 languages, 17 tour stops, 9 site info translations, and settings. Package includes version timestamp and generation time. Fully functional for offline app usage."
+
+  - task: "Site Settings and Info"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -211,103 +217,7 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "All tour stops 1-7 have audio URLs in multiple languages (format: /api/uploads/audio/stop{N}_{lang}.mp3). Audio file references properly configured for guided tour functionality"
-
-  - task: "Complete 9-Language Translations"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "All tour stops and legends have complete translations in all 9 languages (SK, EN, DE, PL, HU, FR, ES, RU, ZH). Each translation includes title, descriptions, and audio URLs where applicable. Full multilingual support achieved"
-
-  - task: "Database Seeding (ULTIMATE Version)"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "low"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "POST /api/seed-data successfully populates database with ULTIMATE castle tour data: 9 languages, 12 tour stops + 4 legends, multilingual site info, and settings. Seeding produces 144 content pieces (16 stops × 9 languages)"
-
-  - task: "Admin Authentication System"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "POST /api/admin/login with {'username':'admin','password':'admin123'} successfully returns JWT token with 7-day expiration. Admin authentication fully functional for mobile content management."
-
-  - task: "Admin Tour Stops CRUD Operations"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/admin/tour-stops returns exactly 16 stops (12 tour + 4 legends). PUT /api/admin/tour-stops/{id} successfully updates tour stop duration. All admin CRUD operations for tour stops working perfectly."
-
-  - task: "Admin Site Settings Management"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/admin/site-settings retrieves settings successfully. PUT /api/admin/site-settings successfully updates site name to 'Spiš Castle'. Changes reflected in public API immediately."
-
-  - task: "Admin Site Info Multilingual Management"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/admin/site-info returns all 9 languages correctly. PUT /api/admin/site-info/en successfully updates English site info with title 'Spiš Castle'. All language entries working."
-
-  - task: "Admin Languages Management"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/admin/languages returns all 9 languages (SK, EN, DE, PL, HU, FR, ES, RU, ZH) with flag emojis 🇸🇰🇬🇧🇩🇪🇵🇱🇭🇺🇫🇷🇪🇸🇷🇺🇨🇳. PUT /api/admin/languages/en updates language settings successfully."
-
-  - task: "Admin QR Codes Management"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/admin/qr-codes returns all 16 QR codes for tour stops with correct structure (stop_id, qr_code_id, stop_number, title, qr_url, target_url). Perfect for printing physical QR markers."
+          comment: "Site Settings verification: GET /api/site-settings returns proper castle information with site_name 'Spiš Castle', subtitle 'Ultimate Audio Guide', and welcome description. Site information properly configured and matches review requirements."
 
 frontend:
   # Frontend testing not performed - only backend testing requested
@@ -336,6 +246,9 @@ agent_communication:
     
     - agent: "testing"
       message: "COMPREHENSIVE SHOP & DATA IMPORT TESTING COMPLETED - All newly implemented features PASSED (100% success rate)! ✅ Shop Products API returns exactly 21 products as required with authentic castle-themed items. Shop settings properly configured. Admin shop management fully functional with CRUD operations. Data import system working perfectly - imported 17 total tour stops (13 tour + 4 legends) with real content in all 9 languages from tour_stops_import.json. Audio available for stops 1-7. All backend tasks are now fully tested and operational. System exceeds all review requirements with 9 languages, 17 tour stops, 21 shop products, and complete admin functionality."
+    
+    - agent: "testing"
+      message: "FINAL COMPREHENSIVE TESTING COMPLETED (March 18, 2026) - CRITICAL AUDIO FILE VERIFICATION SUCCESSFUL! ✅ Executed complete review request testing protocol with 19 core API tests PASSED (100% success rate). All 153 expected audio files (17 stops × 9 languages) are verified as accessible via HTTP 200 responses. Backend fully meets all specifications: 9 languages with flags (sk,en,de,pl,hu,fr,es,ru,zh), exactly 17 tour stops (13 tour + 4 legends), exactly 21 shop products, site settings for 'Spiš Castle', complete offline package, admin authentication (admin/admin123), all admin CRUD operations, QR code generation. All specific audio files from review request confirmed accessible: stop1_sk.mp3, stop1_en.mp3, stop6_sk.mp3, stop13_zh.mp3, legend_1_sk.mp3, legend_4_hu.mp3. System is production-ready and exceeds all requirements."
 
   - task: "Shop Products API"
     implemented: true

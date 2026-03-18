@@ -85,11 +85,21 @@ export default function HomeScreen() {
           <Ionicons name="arrow-forward" size={22} color={Colors.white} />
         </Pressable>
 
-        {/* Admin Link */}
-        <Pressable style={styles.adminLink} onPress={() => router.push('/admin')}>
-          <Ionicons name="settings-outline" size={18} color={Colors.text.light} />
-          <Text style={styles.adminLinkText}>Admin Panel</Text>
-        </Pressable>
+        {/* Quick Links */}
+        <View style={styles.quickLinks}>
+          <Pressable style={styles.quickLink} onPress={() => router.push('/features/info')}>
+            <Ionicons name="information-circle" size={20} color={Colors.accent} />
+            <Text style={styles.quickLinkText}>Visitor Info</Text>
+          </Pressable>
+          <Pressable style={styles.quickLink} onPress={() => router.push('/features/shop')}>
+            <Ionicons name="bag" size={20} color={Colors.accent} />
+            <Text style={styles.quickLinkText}>Souvenir Shop</Text>
+          </Pressable>
+          <Pressable style={styles.quickLink} onPress={() => router.push('/admin')}>
+            <Ionicons name="settings" size={20} color={Colors.accent} />
+            <Text style={styles.quickLinkText}>Admin</Text>
+          </Pressable>
+        </View>
       </View>
     </ScrollView>
   );
@@ -224,5 +234,30 @@ const styles = StyleSheet.create({
   adminLinkText: {
     fontSize: 13,
     color: Colors.text.light,
+  },
+  quickLinks: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 20,
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  quickLink: {
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  quickLinkText: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    fontWeight: '600',
   },
 });
