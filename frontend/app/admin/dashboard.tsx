@@ -40,7 +40,7 @@ export default function AdminDashboard() {
   const [tourStops, setTourStops] = useState<TourStop[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [settings, setSettings] = useState<SiteSettingsData | null>(null);
-  const [activeTab, setActiveTab] = useState<'stops' | 'settings' | 'qrcodes' | 'shop'>('stops');
+  const [activeTab, setActiveTab] = useState<'stops' | 'settings' | 'qrcodes' | 'shop' | 'videos'>('stops');
   const [editingStop, setEditingStop] = useState<TourStop | null>(null);
   const [editingLang, setEditingLang] = useState<string>('en');
   const [editTitle, setEditTitle] = useState('');
@@ -74,6 +74,14 @@ export default function AdminDashboard() {
   const [shopDesc, setShopDesc] = useState('');
   const [shopHours, setShopHours] = useState('');
   const [shopLocation, setShopLocation] = useState('');
+
+  // Video management
+  const [videos, setVideos] = useState<any[]>([]);
+  const [editingVideo, setEditingVideo] = useState<any>(null);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoName, setVideoName] = useState('');
+  const [videoDesc, setVideoDesc] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
 
   // Image URL editing for tour stops
   const [editImageUrl, setEditImageUrl] = useState('');
@@ -110,13 +118,14 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const auth = { headers: { Authorization: `Bearer ${token}` } };
-      const [stopsRes, langsRes, settingsRes, shopProdsRes, shopSettRes, qrRes] = await Promise.all([
+      const [stopsRes, langsRes, settingsRes, shopProdsRes, shopSettRes, qrRes, videosRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/admin/tour-stops`, auth),
         axios.get(`${API_BASE_URL}/admin/languages`, auth),
         axios.get(`${API_BASE_URL}/admin/site-settings`, auth),
         axios.get(`${API_BASE_URL}/admin/shop/products`, auth).catch(() => ({ data: [] })),
         axios.get(`${API_BASE_URL}/admin/shop/settings`, auth).catch(() => ({ data: null })),
         axios.get(`${API_BASE_URL}/admin/qr-codes`, auth).catch(() => ({ data: [] })),
+        axios.get(`${API_BASE_URL}/admin/videos`, auth).catch(() => ({ data: [] })),
       ]);
       setTourStops(stopsRes.data);
       setLanguages(langsRes.data);
@@ -124,6 +133,7 @@ export default function AdminDashboard() {
       setShopProducts(shopProdsRes.data);
       setShopSettings(shopSettRes.data);
       setQrCodes(qrRes.data);
+      setVideos(videosRes.data);
     } catch (err) {
       console.error('Error loading admin data:', err);
     } finally {
@@ -304,6 +314,52 @@ export default function AdminDashboard() {
     }
   };
 
+  // Video CRUD
+  const openVideoEdit = (video: any) => {
+    setEditingVideo(video);
+    setVideoName(video.name);
+    setVideoDesc(video.description || '');
+    setVideoUrl(video.video_url);
+    setShowVideoModal(true);
+  };
+
+  const openNewVideo = () => {
+    setEditingVideo(null);
+    setVideoName('');
+    setVideoDesc('');
+    setVideoUrl('');
+    setShowVideoModal(true);
+  };
+
+  const saveVideo = async () => {
+    if (!token) return;
+    setSaving(true);
+    try {
+      const data = { name: videoName, description: videoDesc, video_url: videoUrl };
+      if (editingVideo) {
+        await axios.put(`${API_BASE_URL}/admin/videos/${editingVideo.id}`, data, getAuthHeaders());
+      } else {
+        await axios.post(`${API_BASE_URL}/admin/videos`, data, getAuthHeaders());
+      }
+      setShowVideoModal(false);
+      loadData();
+    } catch (err) {
+      console.error('Error saving video:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteVideo = async (videoId: string) => {
+    if (!token) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/admin/videos/${videoId}`, getAuthHeaders());
+      loadData();
+    } catch (err) {
+      console.error('Error deleting video:', err);
+    }
+  };
+
   const handleLogout = async () => {
     await AsyncStorage.removeItem('adminToken');
     router.replace('/admin');
@@ -341,14 +397,14 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
         <View style={styles.tabs}>
-          {(['stops', 'settings', 'qrcodes', 'shop'] as const).map(tab => (
+          {(['stops', 'settings', 'qrcodes', 'shop', 'videos'] as const).map(tab => (
             <Pressable
               key={tab}
               style={[styles.tab, activeTab === tab && styles.tabActive]}
               onPress={() => setActiveTab(tab)}
             >
               <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {tab === 'stops' ? 'Tour Stops' : tab === 'settings' ? 'Settings' : tab === 'qrcodes' ? 'QR Codes' : 'Shop'}
+                {tab === 'stops' ? 'Stops' : tab === 'settings' ? 'Settings' : tab === 'qrcodes' ? 'QR' : tab === 'videos' ? 'Videos' : 'Shop'}
               </Text>
             </Pressable>
           ))}
@@ -540,6 +596,39 @@ export default function AdminDashboard() {
             ))}
           </>
         )}
+
+        {/* ==================== VIDEOS TAB ==================== */}
+        {activeTab === 'videos' && (
+          <>
+            <View style={styles.shopHeader}>
+              <Text style={styles.sectionTitle}>Videos ({videos.length})</Text>
+              <Pressable style={styles.addProductBtn} onPress={openNewVideo}>
+                <Ionicons name="add" size={20} color={Colors.white} />
+                <Text style={styles.addProductText}>Add</Text>
+              </Pressable>
+            </View>
+            {videos.map(video => (
+              <View key={video.id} style={styles.productAdminCard}>
+                <View style={[styles.productAdminInfo, { flex: 1 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="videocam" size={16} color={Colors.accent} />
+                    <Text style={styles.productAdminName}>{video.name}</Text>
+                  </View>
+                  {video.description ? <Text style={styles.productAdminDesc} numberOfLines={1}>{video.description}</Text> : null}
+                  <Text style={[styles.productAdminDesc, { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11 }]} numberOfLines={1}>{video.video_url}</Text>
+                </View>
+                <View style={styles.productActions}>
+                  <Pressable style={styles.productActionBtn} onPress={() => openVideoEdit(video)}>
+                    <Ionicons name="create" size={18} color={Colors.accent} />
+                  </Pressable>
+                  <Pressable style={styles.productActionBtn} onPress={() => deleteVideo(video.id)}>
+                    <Ionicons name="trash" size={18} color={Colors.error} />
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </>
+        )}
       </ScrollView>
 
       {/* ==================== EDIT STOP MODAL ==================== */}
@@ -681,6 +770,31 @@ export default function AdminDashboard() {
             </ScrollView>
             <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveShopSettings} disabled={saving}>
               {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>Save Shop Settings</Text>}
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ==================== VIDEO EDIT MODAL ==================== */}
+      <Modal visible={showVideoModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{editingVideo ? 'Edit Video' : 'Add Video'}</Text>
+              <Pressable onPress={() => setShowVideoModal(false)}>
+                <Ionicons name="close" size={24} color={Colors.text.primary} />
+              </Pressable>
+            </View>
+            <ScrollView style={styles.modalScroll}>
+              <Text style={styles.label}>Video Name</Text>
+              <TextInput style={styles.modalInput} value={videoName} onChangeText={setVideoName} placeholderTextColor={Colors.text.light} placeholder="Video title" />
+              <Text style={styles.label}>Description</Text>
+              <TextInput style={[styles.modalInput, styles.modalTextarea]} value={videoDesc} onChangeText={setVideoDesc} multiline placeholderTextColor={Colors.text.light} placeholder="Video description" />
+              <Text style={styles.label}>Video URL</Text>
+              <TextInput style={styles.modalInput} value={videoUrl} onChangeText={setVideoUrl} placeholderTextColor={Colors.text.light} placeholder="/api/uploads/videos/filename.mp4" />
+            </ScrollView>
+            <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveVideo} disabled={saving}>
+              {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{editingVideo ? 'Update Video' : 'Add Video'}</Text>}
             </Pressable>
           </View>
         </View>

@@ -252,6 +252,35 @@ class ShopSettingsUpdate(BaseModel):
     opening_hours: Optional[str] = None
     location: Optional[str] = None
 
+
+# ==================== VIDEO MODELS ====================
+
+class VideoItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str = ""
+    video_url: str
+    thumbnail_url: Optional[str] = None
+    order: int = 0
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class VideoItemCreate(BaseModel):
+    name: str
+    description: str = ""
+    video_url: str
+    thumbnail_url: Optional[str] = None
+    order: int = 0
+
+class VideoItemUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    video_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    order: Optional[int] = None
+    is_active: Optional[bool] = None
+
 # ==================== AUTH HELPERS ====================
 
 def hash_password(password: str) -> str:
@@ -926,6 +955,42 @@ async def admin_update_shop_settings(data: ShopSettingsUpdate, current_admin: di
     settings = await db.shop_settings.find_one({"id": "shop"})
     settings.pop('_id', None)
     return settings
+
+# ==================== VIDEO ENDPOINTS ====================
+
+# Public: list videos
+@api_router.get("/videos")
+async def get_videos():
+    videos = await db.videos.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(50)
+    return videos
+
+# Admin: list videos
+@api_router.get("/admin/videos")
+async def admin_get_videos(current_admin: dict = Depends(get_current_admin)):
+    videos = await db.videos.find({}, {"_id": 0}).sort("order", 1).to_list(50)
+    return videos
+
+# Admin: create video
+@api_router.post("/admin/videos")
+async def admin_create_video(data: VideoItemCreate, current_admin: dict = Depends(get_current_admin)):
+    video = VideoItem(**data.model_dump())
+    await db.videos.insert_one(video.model_dump())
+    return video.model_dump()
+
+# Admin: update video
+@api_router.put("/admin/videos/{video_id}")
+async def admin_update_video(video_id: str, data: VideoItemUpdate, current_admin: dict = Depends(get_current_admin)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if update_data:
+        result = await db.videos.update_one({"id": video_id}, {"$set": update_data})
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    return video
+
+# Admin: delete video
+@api_router.delete("/admin/videos/{video_id}")
+async def admin_delete_video(video_id: str, current_admin: dict = Depends(get_current_admin)):
+    result = await db.videos.delete_one({"id": video_id})
+    return {"deleted": result.deleted_count > 0}
 
 # ==================== SEED DATA ====================
 

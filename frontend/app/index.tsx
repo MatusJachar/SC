@@ -98,6 +98,13 @@ export default function HomeScreen() {
             <Text style={styles.menuText}>Souvenir Shop</Text>
             <Text style={styles.menuSubtext}>21 Items</Text>
           </Pressable>
+          <Pressable style={styles.menuItem} onPress={() => router.push('/features/video')}>
+            <View style={[styles.menuIcon, { backgroundColor: '#FCE4EC' }]}>
+              <Ionicons name="videocam" size={24} color="#E91E63" />
+            </View>
+            <Text style={styles.menuText}>Castle Videos</Text>
+            <Text style={styles.menuSubtext}>3 Films</Text>
+          </Pressable>
           <Pressable style={styles.menuItem} onPress={() => router.push('/features/info')}>
             <View style={[styles.menuIcon, { backgroundColor: '#E3F2FD' }]}>
               <Ionicons name="map" size={24} color="#2196F3" />
@@ -105,14 +112,11 @@ export default function HomeScreen() {
             <Text style={styles.menuText}>Transport</Text>
             <Text style={styles.menuSubtext}>How to get here</Text>
           </Pressable>
-          <Pressable style={styles.menuItem} onPress={() => router.push('/admin')}>
-            <View style={[styles.menuIcon, { backgroundColor: '#F3E5F5' }]}>
-              <Ionicons name="settings" size={24} color="#9C27B0" />
-            </View>
-            <Text style={styles.menuText}>Admin</Text>
-            <Text style={styles.menuSubtext}>Manage Content</Text>
-          </Pressable>
         </View>
+        <Pressable style={styles.adminLink} onPress={() => router.push('/admin')}>
+          <Ionicons name="settings-outline" size={16} color={Colors.text.light} />
+          <Text style={styles.adminLinkText}>Admin Panel</Text>
+        </Pressable>
       </View>
 
       {/* ===== OPENING HOURS QUICK VIEW ===== */}
@@ -210,12 +214,12 @@ export default function HomeScreen() {
         </View>
         <View style={styles.priceTable}>
           {[
-            { label: 'Adults', price: '10.00 \u20AC' },
-            { label: 'Children (6-15)', price: '5.00 \u20AC' },
-            { label: 'Students, seniors', price: '7.00 \u20AC' },
-            { label: 'Family (2+2)', price: '22.00 \u20AC', highlight: true },
-            { label: 'Night tour adults', price: '13.00 \u20AC' },
-            { label: 'Night tour families', price: '30.00 \u20AC' },
+            { label: 'Adults', price: '12.00 \u20AC' },
+            { label: 'Children (6-15)', price: '7.00 \u20AC' },
+            { label: 'Students, seniors', price: '9.00 \u20AC' },
+            { label: 'Family (2+2)', price: '26.00 \u20AC', highlight: true },
+            { label: 'Night tour adults', price: '15.00 \u20AC' },
+            { label: 'Night tour families', price: '34.00 \u20AC' },
           ].map((row, idx) => (
             <View key={idx} style={[styles.priceRow, row.highlight && styles.priceRowHighlight]}>
               <Text style={[styles.priceLabel, row.highlight && styles.priceLabelBold]}>{row.label}</Text>
@@ -395,6 +399,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.text.light,
     marginTop: 2,
+  },
+  adminLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 6,
+  },
+  adminLinkText: {
+    fontSize: 13,
+    color: Colors.text.light,
+    fontWeight: '600',
   },
 
   // ===== INFO SECTIONS =====

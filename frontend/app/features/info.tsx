@@ -17,14 +17,14 @@ interface PriceRow {
 }
 
 const PRICES: PriceRow[] = [
-  { label: 'Adults', price: '10.00 \u20AC' },
-  { label: 'Children (6-15 years)', price: '5.00 \u20AC' },
-  { label: 'Students, seniors', price: '7.00 \u20AC' },
-  { label: 'Family ticket (2+2)', price: '22.00 \u20AC', highlight: true },
-  { label: 'ZTP child (up to 18 years)', price: '3.00 \u20AC' },
-  { label: 'ZTP adults', price: '5.00 \u20AC' },
-  { label: 'Night tour for adults', price: '13.00 \u20AC' },
-  { label: 'Night tour for families', price: '30.00 \u20AC' },
+  { label: 'Adults', price: '12.00 \u20AC' },
+  { label: 'Children (6-15 years)', price: '7.00 \u20AC' },
+  { label: 'Students, seniors', price: '9.00 \u20AC' },
+  { label: 'Family ticket (2+2)', price: '26.00 \u20AC', highlight: true },
+  { label: 'ZTP child (up to 18 years)', price: '5.00 \u20AC' },
+  { label: 'ZTP adults', price: '7.00 \u20AC' },
+  { label: 'Night tour for adults', price: '15.00 \u20AC' },
+  { label: 'Night tour for families', price: '34.00 \u20AC' },
 ];
 
 export default function VisitorInfoScreen() {
