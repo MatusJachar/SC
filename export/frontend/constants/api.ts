@@ -3,10 +3,12 @@ import Constants from 'expo-constants';
 // Get the backend URL from environment or use a fallback
 const getApiBaseUrl = () => {
   const backendUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL 
-    || process.env.EXPO_PUBLIC_BACKEND_URL
-    || '';
+    || process.env.EXPO_PUBLIC_BACKEND_URL;
   if (backendUrl) return `${backendUrl}/api`;
-  // Fallback for local development
+  // Fallback: use window origin in web, localhost in dev
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}/api`;
+  }
   return 'http://localhost:8001/api';
 };
 
