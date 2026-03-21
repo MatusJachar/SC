@@ -9,7 +9,6 @@ import axios from 'axios';
 
 const GPS_LAT = 48.9998;
 const GPS_LNG = 20.7680;
-const MAPS_URL = `https://www.google.com/maps/search/?api=1&query=${GPS_LAT},${GPS_LNG}`;
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface PriceRow {
@@ -52,10 +51,6 @@ export default function VisitorInfoScreen() {
       if (res.data?.social_links) setSocialLinks(res.data.social_links);
       if (res.data?.castle_map_url) setCastleMapUrl(res.data.castle_map_url);
     } catch {}
-  };
-
-  const openMaps = () => {
-    Linking.openURL(MAPS_URL);
   };
 
   return (
@@ -242,116 +237,6 @@ export default function VisitorInfoScreen() {
               <Text style={styles.closedItem}>{'\u2022'} Museum (until 04/2030)</Text>
               <Text style={styles.closedItem}>{'\u2022'} Romanesque Palace (until 04/2028)</Text>
             </View>
-          </View>
-        </View>
-
-        {/* ========== TRANSPORT ========== */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIcon, { backgroundColor: '#2196F3' }]}>
-              <Ionicons name="navigate" size={18} color="#fff" />
-            </View>
-            <Text style={styles.sectionTitle}>Transport</Text>
-          </View>
-          <Text style={styles.sectionSubtitle}>How to get to the castle</Text>
-
-          {/* GPS */}
-          <View style={styles.gpsCard}>
-            <View style={styles.gpsHeader}>
-              <Ionicons name="location" size={22} color={Colors.accent} />
-              <Text style={styles.gpsTitle}>GPS Coordinates</Text>
-            </View>
-            <Text style={styles.gpsCoords}>48{'\u00B0'}59.98956'N, 20{'\u00B0'}46.08196'E</Text>
-            <Pressable style={styles.mapButton} onPress={openMaps}>
-              <Ionicons name="map" size={18} color="#fff" />
-              <Text style={styles.mapButtonText}>Open in Google Maps</Text>
-            </Pressable>
-          </View>
-
-          {/* By Car */}
-          <View style={styles.transportCard}>
-            <View style={styles.transportHeader}>
-              <Ionicons name="car" size={22} color="#4CAF50" />
-              <Text style={styles.transportTitle}>By Car</Text>
-            </View>
-            <Text style={styles.transportText}>
-              The easiest way to get to Spi{'\u0161'} Castle is by car (parking lot directly under the castle) or by bus to Spi{'\u0161'}sk{'\u00E9'} Podhradie and from there on foot.
-            </Text>
-            <Text style={styles.transportDetail}>
-              <Text style={styles.bold}>Route: </Text>
-              From the D1 highway, turn towards Levo{'\u010D'}a and then towards Spi{'\u0161'}sk{'\u00E9'} Podhradie. Approximately 40 km from Poprad, approximately 25 km from Spi{'\u0161'}sk{'\u00E1'} Nov{'\u00E1'} Ves.
-            </Text>
-            <Text style={styles.transportDetail}>
-              <Text style={styles.bold}>Parking: </Text>
-              There is an asphalt road leading to the parking lot right below the castle. It can be full during high season, in which case you will have to park on the side of the road.
-            </Text>
-          </View>
-
-          {/* Public Transport */}
-          <View style={styles.transportCard}>
-            <View style={styles.transportHeader}>
-              <Ionicons name="bus" size={22} color="#FF9800" />
-              <Text style={styles.transportTitle}>Public Transport</Text>
-            </View>
-            <Text style={styles.transportSubhead}>By bus:</Text>
-            <Text style={styles.transportText}>
-              Take a bus to Spi{'\u0161'}sk{'\u00E9'} Podhradie. From there it is about a 30-45 minute walk to the castle.
-            </Text>
-            <Text style={styles.transportSubhead}>By train:</Text>
-            <Text style={styles.transportText}>
-              From Poprad or Spi{'\u0161'}sk{'\u00E1'} Nov{'\u00E1'} Ves take a train to Spi{'\u0161'}sk{'\u00E9'} Vlachy and change to Spi{'\u0161'}sk{'\u00E9'} Podhradie. Please note that trains do not have to wait for each other. The train to Spi{'\u0161'}sk{'\u00E9'} Podhradie only runs during summer tourist season.
-            </Text>
-            <Text style={styles.transportSubhead}>By tourist train:</Text>
-            <Text style={styles.transportText}>
-              A tourist train runs from the bus station in Spi{'\u0161'}sk{'\u00E9'} Podhradie directly to the castle during the season. Check the timetable in advance.
-            </Text>
-          </View>
-
-          {/* On Foot */}
-          <View style={styles.transportCard}>
-            <View style={styles.transportHeader}>
-              <Ionicons name="walk" size={22} color="#9C27B0" />
-              <Text style={styles.transportTitle}>On Foot</Text>
-            </View>
-            <Text style={styles.transportText}>
-              From Spi{'\u0161'}sk{'\u00E9'} Podhradie: From the bus station it is about 30-45 minutes walk to the castle along the hiking trail. From the train station it is about 20 minutes.
-            </Text>
-          </View>
-
-          {/* Transport & Airport Lift */}
-          <View style={styles.transportCard}>
-            <View style={styles.transportHeader}>
-              <Ionicons name="airplane" size={22} color="#E91E63" />
-              <Text style={styles.transportTitle}>Transport & Airport Lift</Text>
-            </View>
-            <Text style={styles.transportText}>
-              Need a ride to the airport or city? We offer transport services to:
-            </Text>
-            <Text style={styles.transportDetail}>
-              {'\u2022'} Poprad Airport (Tatry Airport){'\n'}{'\u2022'} Ko{'\u0161'}ice International Airport{'\n'}{'\u2022'} Pre{'\u0161'}ov city{'\n'}{'\u2022'} Spi{'\u0161'}sk{'\u00E1'} Nov{'\u00E1'} Ves, Poprad and surroundings
-            </Text>
-            <Pressable style={styles.phoneButton} onPress={() => Linking.openURL('tel:0944376007')}>
-              <Ionicons name="call" size={16} color="#fff" />
-              <Text style={styles.phoneButtonText}>0944 376 007</Text>
-            </Pressable>
-          </View>
-
-          {/* Personal Tour Guide */}
-          <View style={[styles.transportCard, { borderColor: '#D4A017', borderWidth: 1 }]}>
-            <View style={styles.transportHeader}>
-              <Ionicons name="person" size={22} color="#D4A017" />
-              <Text style={[styles.transportTitle, { color: '#D4A017' }]}>Personal Tour Guide</Text>
-            </View>
-            <Text style={styles.transportText}>
-              Discover more of the region and nature with a personal tour guide. Explore the hidden gems of Spi{'\u0161'} region, hiking trails, nearby castles, caves, and authentic Slovak countryside.
-            </Text>
-            <Text style={styles.transportDetail}>
-              {'\u2022'} Guided tours of Spi{'\u0161'} Castle and surroundings{'\n'}{'\u2022'} Nature & hiking excursions{'\n'}{'\u2022'} Regional sightseeing (Levo{'\u010D'}a, Slovak Paradise, High Tatras){'\n'}{'\u2022'} Custom itineraries available
-            </Text>
-            <Pressable style={[styles.phoneButton, { backgroundColor: '#D4A017' }]} onPress={() => Linking.openURL('tel:0944376007')}>
-              <Ionicons name="call" size={16} color="#fff" />
-              <Text style={styles.phoneButtonText}>0944 376 007</Text>
-            </Pressable>
           </View>
         </View>
       </ScrollView>

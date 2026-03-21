@@ -1,11 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, Platform } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, Platform, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../constants/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const { width, height } = Dimensions.get('window');
 const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
@@ -49,12 +51,75 @@ export default function TourSelectScreen() {
   const insets = useSafeAreaInsets();
   const { setSelectedTourType } = useApp();
   const [selected, setSelected] = useState('complete');
+  const [unlockedProducts, setUnlockedProducts] = useState<string[]>([]);
+  const [deviceId, setDeviceId] = useState('');
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [redeemCode, setRedeemCode] = useState('');
+  const [redeemLoading, setRedeemLoading] = useState(false);
+  const [prices, setPrices] = useState<any>(null);
+
+  useEffect(() => {
+    initPremium();
+  }, []);
+
+  const initPremium = async () => {
+    try {
+      let id = await AsyncStorage.getItem('@spis_device_id');
+      if (!id) {
+        id = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await AsyncStorage.setItem('@spis_device_id', id);
+      }
+      setDeviceId(id);
+      const cached = await AsyncStorage.getItem('@spis_unlocks');
+      if (cached) setUnlockedProducts(JSON.parse(cached));
+      const [statusRes, pricesRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/premium/status/${id}`),
+        axios.get(`${API_BASE_URL}/premium/settings`),
+      ]);
+      const unlocked = statusRes.data?.unlocked || [];
+      setUnlockedProducts(unlocked);
+      await AsyncStorage.setItem('@spis_unlocks', JSON.stringify(unlocked));
+      setPrices(pricesRes.data);
+    } catch {}
+  };
+
+  const isTourUnlocked = (tourId: string) => {
+    if (tourId === 'express') return true; // Express is always free
+    return unlockedProducts.includes('complete_tour') || unlockedProducts.includes('bundle');
+  };
 
   const selectedTour = useMemo(() => TOUR_TYPES.find(t => t.id === selected)!, [selected]);
 
   const handleContinue = () => {
+    if (!isTourUnlocked(selected)) {
+      setShowRedeemModal(true);
+      return;
+    }
     setSelectedTourType(selected);
     router.push('/tour');
+  };
+
+  const handleRedeemCode = async () => {
+    if (!redeemCode.trim()) return;
+    setRedeemLoading(true);
+    try {
+      await axios.post(`${API_BASE_URL}/premium/redeem`, {
+        code: redeemCode.trim(),
+        product_type: 'complete_tour',
+        device_id: deviceId,
+      });
+      const newUnlocks = [...unlockedProducts, 'complete_tour'];
+      setUnlockedProducts(newUnlocks);
+      await AsyncStorage.setItem('@spis_unlocks', JSON.stringify(newUnlocks));
+      setShowRedeemModal(false);
+      setRedeemCode('');
+      Alert.alert('Success!', 'Complete Tour unlocked! Enjoy the full experience.');
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Invalid or expired code';
+      Alert.alert('Error', msg);
+    } finally {
+      setRedeemLoading(false);
+    }
   };
 
   return (
@@ -110,6 +175,28 @@ export default function TourSelectScreen() {
               {/* Name */}
               <Text style={[styles.tourName, { color: tour.color }]}>{tour.name}</Text>
 
+              {/* Premium badge */}
+              {tour.id !== 'express' && !isTourUnlocked(tour.id) && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                  <Ionicons name="lock-closed" size={12} color="#D4A017" />
+                  <Text style={{ fontSize: 11, color: '#D4A017', fontWeight: '700' }}>
+                    Premium{prices ? ` — ${prices.complete_tour_price}€` : ''}
+                  </Text>
+                </View>
+              )}
+              {tour.id !== 'express' && isTourUnlocked(tour.id) && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                  <Ionicons name="checkmark-circle" size={12} color="#4CAF50" />
+                  <Text style={{ fontSize: 11, color: '#4CAF50', fontWeight: '700' }}>Unlocked</Text>
+                </View>
+              )}
+              {tour.id === 'express' && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                  <Ionicons name="gift" size={12} color="#4CAF50" />
+                  <Text style={{ fontSize: 11, color: '#4CAF50', fontWeight: '700' }}>Free</Text>
+                </View>
+              )}
+
               {/* Description */}
               <Text style={styles.tourDesc}>{tour.description}</Text>
 
@@ -136,10 +223,59 @@ export default function TourSelectScreen() {
           style={({ pressed }) => [styles.continueButton, pressed && styles.continueButtonPressed]}
           onPress={handleContinue}
         >
-          <Text style={styles.continueText}>Continue</Text>
-          <Ionicons name="arrow-forward" size={22} color="#1A1A2E" />
+          {selected !== 'express' && !isTourUnlocked(selected) ? (
+            <>
+              <Ionicons name="lock-closed" size={18} color="#1A1A2E" />
+              <Text style={styles.continueText}>Unlock & Continue</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.continueText}>Continue</Text>
+              <Ionicons name="arrow-forward" size={22} color="#1A1A2E" />
+            </>
+          )}
         </Pressable>
       </ScrollView>
+
+      {/* Redeem Code Modal */}
+      <Modal visible={showRedeemModal} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#1A1A2E', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: insets.bottom + 24 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: '#fff' }}>Unlock Complete Tour</Text>
+              <Pressable onPress={() => setShowRedeemModal(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </Pressable>
+            </View>
+            <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 22, marginBottom: 16 }}>
+              Family & Complete tours are premium features. Purchase an access code at the castle ticket booth or enter your code below.
+            </Text>
+            <TextInput
+              style={{ backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, paddingHorizontal: 20, paddingVertical: 16, fontSize: 18, fontWeight: '700', textAlign: 'center', letterSpacing: 2, color: '#fff', borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)' }}
+              value={redeemCode}
+              onChangeText={setRedeemCode}
+              placeholder="SPIS-XXXX-XXXX"
+              placeholderTextColor="rgba(255,255,255,0.3)"
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+            <Pressable
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#D4A017', borderRadius: 14, paddingVertical: 16, marginTop: 16 }}
+              onPress={handleRedeemCode}
+              disabled={redeemLoading}
+            >
+              {redeemLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>Redeem Code</Text>
+                </>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

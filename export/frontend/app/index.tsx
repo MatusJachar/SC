@@ -103,11 +103,17 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.iconLabel}>Videos</Text>
           </Pressable>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/info')}>
+          <Pressable style={styles.iconItem} onPress={() => router.push('/features/transport')}>
             <View style={[styles.iconCircle, { backgroundColor: '#2196F3' }]}>
               <Ionicons name="car" size={24} color="#fff" />
             </View>
             <Text style={styles.iconLabel}>Transport</Text>
+          </Pressable>
+          <Pressable style={styles.iconItem} onPress={() => router.push('/features/vr')}>
+            <View style={[styles.iconCircle, { backgroundColor: '#7C4DFF' }]}>
+              <Ionicons name="glasses" size={24} color="#fff" />
+            </View>
+            <Text style={styles.iconLabel}>VR</Text>
           </Pressable>
           <Pressable style={styles.iconItem} onPress={() => router.push('/admin')}>
             <View style={[styles.iconCircle, { backgroundColor: '#9C27B0' }]}>

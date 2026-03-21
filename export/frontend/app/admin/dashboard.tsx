@@ -40,7 +40,7 @@ export default function AdminDashboard() {
   const [tourStops, setTourStops] = useState<TourStop[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [settings, setSettings] = useState<SiteSettingsData | null>(null);
-  const [activeTab, setActiveTab] = useState<'stops' | 'settings' | 'qrcodes' | 'shop' | 'videos'>('stops');
+  const [activeTab, setActiveTab] = useState<'stops' | 'settings' | 'qrcodes' | 'shop' | 'videos' | 'vr' | 'premium'>('stops');
   const [editingStop, setEditingStop] = useState<TourStop | null>(null);
   const [editingLang, setEditingLang] = useState<string>('en');
   const [editTitle, setEditTitle] = useState('');
@@ -83,6 +83,26 @@ export default function AdminDashboard() {
   const [videoDesc, setVideoDesc] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
 
+  // VR Content management
+  const [vrItems, setVrItems] = useState<any[]>([]);
+  const [editingVR, setEditingVR] = useState<any>(null);
+  const [showVRModal, setShowVRModal] = useState(false);
+  const [vrTitle, setVrTitle] = useState('');
+  const [vrDesc, setVrDesc] = useState('');
+  const [vrVideoUrl, setVrVideoUrl] = useState('');
+  const [vrThumbnail, setVrThumbnail] = useState('');
+  const [vrIsPremium, setVrIsPremium] = useState(true);
+  const [vrPrice, setVrPrice] = useState('2.99');
+  const [vrOrder, setVrOrder] = useState('0');
+
+  // Premium management
+  const [premiumSettings, setPremiumSettings] = useState<any>(null);
+  const [purchaseCodes, setPurchaseCodes] = useState<any[]>([]);
+  const [editCompleteTourPrice, setEditCompleteTourPrice] = useState('1.99');
+  const [editVRPrice, setEditVRPrice] = useState('2.99');
+  const [editBundlePrice, setEditBundlePrice] = useState('3.99');
+  const [codeGenType, setCodeGenType] = useState('vr_experience');
+  const [codeGenCount, setCodeGenCount] = useState('10');
   // Image URL editing for tour stops
   const [editImageUrl, setEditImageUrl] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
@@ -118,7 +138,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const auth = { headers: { Authorization: `Bearer ${token}` } };
-      const [stopsRes, langsRes, settingsRes, shopProdsRes, shopSettRes, qrRes, videosRes] = await Promise.all([
+      const [stopsRes, langsRes, settingsRes, shopProdsRes, shopSettRes, qrRes, videosRes, vrRes, premRes, codesRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/admin/tour-stops`, auth),
         axios.get(`${API_BASE_URL}/admin/languages`, auth),
         axios.get(`${API_BASE_URL}/admin/site-settings`, auth),
@@ -126,6 +146,9 @@ export default function AdminDashboard() {
         axios.get(`${API_BASE_URL}/admin/shop/settings`, auth).catch(() => ({ data: null })),
         axios.get(`${API_BASE_URL}/admin/qr-codes`, auth).catch(() => ({ data: [] })),
         axios.get(`${API_BASE_URL}/admin/videos`, auth).catch(() => ({ data: [] })),
+        axios.get(`${API_BASE_URL}/admin/vr-content`, auth).catch(() => ({ data: [] })),
+        axios.get(`${API_BASE_URL}/premium/settings`).catch(() => ({ data: null })),
+        axios.get(`${API_BASE_URL}/admin/premium/codes`, auth).catch(() => ({ data: [] })),
       ]);
       setTourStops(stopsRes.data);
       setLanguages(langsRes.data);
@@ -134,6 +157,14 @@ export default function AdminDashboard() {
       setShopSettings(shopSettRes.data);
       setQrCodes(qrRes.data);
       setVideos(videosRes.data);
+      setVrItems(vrRes.data);
+      setPremiumSettings(premRes.data);
+      setPurchaseCodes(codesRes.data);
+      if (premRes.data) {
+        setEditCompleteTourPrice(String(premRes.data.complete_tour_price || '1.99'));
+        setEditVRPrice(String(premRes.data.vr_experience_price || '2.99'));
+        setEditBundlePrice(String(premRes.data.bundle_price || '3.99'));
+      }
     } catch (err) {
       console.error('Error loading admin data:', err);
     } finally {
@@ -408,14 +439,14 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
         <View style={styles.tabs}>
-          {(['stops', 'settings', 'qrcodes', 'shop', 'videos'] as const).map(tab => (
+          {(['stops', 'settings', 'qrcodes', 'shop', 'videos', 'vr', 'premium'] as const).map(tab => (
             <Pressable
               key={tab}
               style={[styles.tab, activeTab === tab && styles.tabActive]}
               onPress={() => setActiveTab(tab)}
             >
               <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {tab === 'stops' ? 'Stops' : tab === 'settings' ? 'Settings' : tab === 'qrcodes' ? 'QR' : tab === 'videos' ? 'Videos' : 'Shop'}
+                {tab === 'stops' ? 'Stops' : tab === 'settings' ? 'Settings' : tab === 'qrcodes' ? 'QR' : tab === 'videos' ? 'Videos' : tab === 'vr' ? 'VR' : tab === 'premium' ? 'Premium' : 'Shop'}
               </Text>
             </Pressable>
           ))}
@@ -640,9 +671,166 @@ export default function AdminDashboard() {
             ))}
           </>
         )}
-      </ScrollView>
 
-      {/* ==================== EDIT STOP MODAL ==================== */}
+        {/* ==================== VR CONTENT TAB ==================== */}
+        {activeTab === 'vr' && (
+          <>
+            <View style={styles.shopHeader}>
+              <Text style={styles.sectionTitle}>VR Content ({vrItems.length})</Text>
+              <Pressable style={styles.addProductBtn} onPress={() => {
+                setEditingVR(null);
+                setVrTitle('');
+                setVrDesc('');
+                setVrVideoUrl('');
+                setVrThumbnail('');
+                setVrIsPremium(true);
+                setVrPrice('2.99');
+                setVrOrder(String(vrItems.length + 1));
+                setShowVRModal(true);
+              }}>
+                <Ionicons name="add" size={20} color={Colors.white} />
+                <Text style={styles.addProductText}>Add VR</Text>
+              </Pressable>
+            </View>
+            {vrItems.map(item => (
+              <View key={item.id} style={styles.productAdminCard}>
+                <View style={[styles.productAdminInfo, { flex: 1 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="glasses" size={16} color="#7C4DFF" />
+                    <Text style={styles.productAdminName}>{item.title}</Text>
+                  </View>
+                  {item.description ? <Text style={styles.productAdminDesc} numberOfLines={1}>{item.description}</Text> : null}
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                    <Text style={[styles.productAdminDesc, { color: item.is_premium ? '#D4A017' : '#4CAF50', fontWeight: '600' }]}>
+                      {item.is_premium ? `Premium ${item.price}€` : 'Free'}
+                    </Text>
+                    <Text style={[styles.productAdminDesc, { color: item.is_active ? '#4CAF50' : '#999' }]}>
+                      {item.is_active ? 'Active' : 'Inactive'}
+                    </Text>
+                  </View>
+                  {item.video_url ? (
+                    <Text style={[styles.productAdminDesc, { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11 }]} numberOfLines={1}>{item.video_url}</Text>
+                  ) : (
+                    <Text style={[styles.productAdminDesc, { color: Colors.error }]}>No video uploaded</Text>
+                  )}
+                </View>
+                <View style={styles.productActions}>
+                  <Pressable style={styles.productActionBtn} onPress={() => {
+                    setEditingVR(item);
+                    setVrTitle(item.title);
+                    setVrDesc(item.description || '');
+                    setVrVideoUrl(item.video_url || '');
+                    setVrThumbnail(item.thumbnail_url || '');
+                    setVrIsPremium(item.is_premium);
+                    setVrPrice(String(item.price || 0));
+                    setVrOrder(String(item.order || 0));
+                    setShowVRModal(true);
+                  }}>
+                    <Ionicons name="create" size={18} color={Colors.accent} />
+                  </Pressable>
+                  <Pressable style={styles.productActionBtn} onPress={async () => {
+                    try {
+                      await axios.delete(`${API_BASE_URL}/admin/vr-content/${item.id}`, getAuthHeaders());
+                      setVrItems(prev => prev.filter(v => v.id !== item.id));
+                    } catch {}
+                  }}>
+                    <Ionicons name="trash" size={18} color={Colors.error} />
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </>
+        )}
+
+        {/* ==================== PREMIUM TAB ==================== */}
+        {activeTab === 'premium' && (
+          <>
+            <Text style={styles.sectionTitle}>Premium & Monetization</Text>
+            
+            {/* Prices */}
+            <View style={[styles.productAdminCard, { padding: 16 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.productAdminName, { marginBottom: 12 }]}>Pricing Settings</Text>
+                <Text style={styles.label}>Complete Tour Price (EUR)</Text>
+                <TextInput style={styles.modalInput} value={editCompleteTourPrice} onChangeText={setEditCompleteTourPrice} keyboardType="decimal-pad" placeholderTextColor={Colors.text.light} />
+                <Text style={styles.label}>VR Experience Price (EUR)</Text>
+                <TextInput style={styles.modalInput} value={editVRPrice} onChangeText={setEditVRPrice} keyboardType="decimal-pad" placeholderTextColor={Colors.text.light} />
+                <Text style={styles.label}>Bundle Price (EUR)</Text>
+                <TextInput style={styles.modalInput} value={editBundlePrice} onChangeText={setEditBundlePrice} keyboardType="decimal-pad" placeholderTextColor={Colors.text.light} />
+                <Pressable style={[styles.saveBtn, { marginTop: 12 }]} onPress={async () => {
+                  try {
+                    await axios.put(`${API_BASE_URL}/admin/premium/settings`, {
+                      complete_tour_price: parseFloat(editCompleteTourPrice) || 1.99,
+                      vr_experience_price: parseFloat(editVRPrice) || 2.99,
+                      bundle_price: parseFloat(editBundlePrice) || 3.99,
+                      currency: 'EUR',
+                    }, getAuthHeaders());
+                    Alert.alert('Saved', 'Premium prices updated');
+                  } catch { Alert.alert('Error', 'Failed to save prices'); }
+                }}>
+                  <Text style={styles.saveBtnText}>Save Prices</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Generate Codes */}
+            <View style={[styles.productAdminCard, { padding: 16, marginTop: 12 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.productAdminName, { marginBottom: 12 }]}>Generate Access Codes</Text>
+                <Text style={styles.label}>Product Type</Text>
+                <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                  {['complete_tour', 'vr_experience', 'bundle'].map(type => (
+                    <Pressable
+                      key={type}
+                      style={[styles.tab, codeGenType === type && styles.tabActive, { paddingHorizontal: 12, paddingVertical: 6 }]}
+                      onPress={() => setCodeGenType(type)}
+                    >
+                      <Text style={[styles.tabText, codeGenType === type && styles.tabTextActive, { fontSize: 12 }]}>
+                        {type === 'complete_tour' ? 'Tour' : type === 'vr_experience' ? 'VR' : 'Bundle'}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={styles.label}>Number of Codes</Text>
+                <TextInput style={styles.modalInput} value={codeGenCount} onChangeText={setCodeGenCount} keyboardType="number-pad" placeholderTextColor={Colors.text.light} />
+                <Pressable style={[styles.addProductBtn, { alignSelf: 'flex-start', marginTop: 8 }]} onPress={async () => {
+                  try {
+                    const res = await axios.post(
+                      `${API_BASE_URL}/admin/premium/generate-codes?product_type=${codeGenType}&count=${parseInt(codeGenCount) || 10}`,
+                      {},
+                      getAuthHeaders()
+                    );
+                    Alert.alert('Codes Generated', `${res.data.codes.length} codes created:\n\n${res.data.codes.join('\n')}`);
+                    loadData();
+                  } catch { Alert.alert('Error', 'Failed to generate codes'); }
+                }}>
+                  <Ionicons name="key" size={16} color="#fff" />
+                  <Text style={styles.addProductText}>Generate</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Existing Codes */}
+            <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Access Codes ({purchaseCodes.length})</Text>
+            {purchaseCodes.slice(0, 30).map((code: any) => (
+              <View key={code.id} style={[styles.productAdminCard, { padding: 12 }]}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[styles.productAdminName, { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 14 }]}>{code.code}</Text>
+                    <Text style={[styles.productAdminDesc, { color: code.is_used ? Colors.error : '#4CAF50', fontWeight: '600' }]}>
+                      {code.is_used ? 'Used' : 'Available'}
+                    </Text>
+                  </View>
+                  <Text style={[styles.productAdminDesc, { marginTop: 2 }]}>
+                    Type: {code.product_type}
+                    {code.is_used && code.used_at ? ` | Used: ${new Date(code.used_at).toLocaleDateString()}` : ''}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </>
+        )}
+      </ScrollView>
       <Modal visible={showEditModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
@@ -815,6 +1003,71 @@ export default function AdminDashboard() {
             </ScrollView>
             <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveVideo} disabled={saving}>
               {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{editingVideo ? 'Update Video' : 'Add Video'}</Text>}
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ==================== VR CONTENT EDIT MODAL ==================== */}
+      <Modal visible={showVRModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{editingVR ? 'Edit VR Content' : 'Add VR Content'}</Text>
+              <Pressable onPress={() => setShowVRModal(false)}>
+                <Ionicons name="close" size={24} color={Colors.text.primary} />
+              </Pressable>
+            </View>
+            <ScrollView style={styles.modalScroll}>
+              <Text style={styles.label}>Title</Text>
+              <TextInput style={styles.modalInput} value={vrTitle} onChangeText={setVrTitle} placeholderTextColor={Colors.text.light} placeholder="VR experience title" />
+              <Text style={styles.label}>Description</Text>
+              <TextInput style={[styles.modalInput, styles.modalTextarea]} value={vrDesc} onChangeText={setVrDesc} multiline placeholderTextColor={Colors.text.light} placeholder="Description of this VR experience" />
+              <Text style={styles.label}>Video URL</Text>
+              <TextInput style={styles.modalInput} value={vrVideoUrl} onChangeText={setVrVideoUrl} placeholderTextColor={Colors.text.light} placeholder="/api/uploads/vr/filename.mp4" />
+              <Text style={styles.label}>Thumbnail URL</Text>
+              <TextInput style={styles.modalInput} value={vrThumbnail} onChangeText={setVrThumbnail} placeholderTextColor={Colors.text.light} placeholder="/api/uploads/images/thumb.jpg" />
+              <Text style={styles.label}>Order</Text>
+              <TextInput style={styles.modalInput} value={vrOrder} onChangeText={setVrOrder} keyboardType="number-pad" placeholderTextColor={Colors.text.light} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 }}>
+                <Pressable 
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                  onPress={() => setVrIsPremium(!vrIsPremium)}
+                >
+                  <Ionicons name={vrIsPremium ? "checkbox" : "square-outline"} size={22} color={Colors.accent} />
+                  <Text style={styles.label}>Premium Content</Text>
+                </Pressable>
+              </View>
+              {vrIsPremium && (
+                <>
+                  <Text style={styles.label}>Price (EUR)</Text>
+                  <TextInput style={styles.modalInput} value={vrPrice} onChangeText={setVrPrice} keyboardType="decimal-pad" placeholderTextColor={Colors.text.light} />
+                </>
+              )}
+            </ScrollView>
+            <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={async () => {
+              setSaving(true);
+              try {
+                const data = {
+                  title: vrTitle,
+                  description: vrDesc,
+                  video_url: vrVideoUrl,
+                  thumbnail_url: vrThumbnail || null,
+                  is_premium: vrIsPremium,
+                  price: parseFloat(vrPrice) || 0,
+                  order: parseInt(vrOrder) || 0,
+                };
+                if (editingVR) {
+                  await axios.put(`${API_BASE_URL}/admin/vr-content/${editingVR.id}`, data, getAuthHeaders());
+                } else {
+                  await axios.post(`${API_BASE_URL}/admin/vr-content`, data, getAuthHeaders());
+                }
+                setShowVRModal(false);
+                loadData();
+              } catch { Alert.alert('Error', 'Failed to save VR content'); }
+              setSaving(false);
+            }} disabled={saving}>
+              {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{editingVR ? 'Update VR' : 'Add VR Content'}</Text>}
             </Pressable>
           </View>
         </View>

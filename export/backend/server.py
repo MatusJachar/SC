@@ -285,6 +285,66 @@ class VideoItemUpdate(BaseModel):
     order: Optional[int] = None
     is_active: Optional[bool] = None
 
+# ==================== VR CONTENT MODELS ====================
+
+class VRContent(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: str = ""
+    video_url: str
+    thumbnail_url: Optional[str] = None
+    is_premium: bool = False
+    price: float = 0.0
+    currency: str = "EUR"
+    order: int = 0
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class VRContentCreate(BaseModel):
+    title: str
+    description: str = ""
+    video_url: str
+    thumbnail_url: Optional[str] = None
+    is_premium: bool = False
+    price: float = 0.0
+    order: int = 0
+
+class VRContentUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    video_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    is_premium: Optional[bool] = None
+    price: Optional[float] = None
+    order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+# ==================== PURCHASE / PREMIUM MODELS ====================
+
+class PurchaseCode(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    code: str
+    product_type: str  # "complete_tour", "vr_experience", "bundle"
+    price: float = 0.0
+    currency: str = "EUR"
+    is_used: bool = False
+    used_by_device: Optional[str] = None
+    used_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PremiumSettings(BaseModel):
+    complete_tour_price: float = 1.99
+    vr_experience_price: float = 2.99
+    bundle_price: float = 3.99
+    currency: str = "EUR"
+
+class PurchaseVerify(BaseModel):
+    code: str
+    product_type: str
+    device_id: str
+
 # ==================== AUTH HELPERS ====================
 
 def hash_password(password: str) -> str:
@@ -996,6 +1056,148 @@ async def admin_delete_video(video_id: str, current_admin: dict = Depends(get_cu
     result = await db.videos.delete_one({"id": video_id})
     return {"deleted": result.deleted_count > 0}
 
+# ==================== VR CONTENT ENDPOINTS ====================
+
+# Public: list VR content
+@api_router.get("/vr-content")
+async def get_vr_content():
+    items = await db.vr_content.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(50)
+    return items
+
+# Admin: list all VR content
+@api_router.get("/admin/vr-content")
+async def admin_get_vr_content(current_admin: dict = Depends(get_current_admin)):
+    items = await db.vr_content.find({}, {"_id": 0}).sort("order", 1).to_list(50)
+    return items
+
+# Admin: create VR content
+@api_router.post("/admin/vr-content")
+async def admin_create_vr_content(data: VRContentCreate, current_admin: dict = Depends(get_current_admin)):
+    item = VRContent(**data.model_dump())
+    await db.vr_content.insert_one(item.model_dump())
+    return item.model_dump()
+
+# Admin: update VR content
+@api_router.put("/admin/vr-content/{item_id}")
+async def admin_update_vr_content(item_id: str, data: VRContentUpdate, current_admin: dict = Depends(get_current_admin)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if update_data:
+        await db.vr_content.update_one({"id": item_id}, {"$set": update_data})
+    item = await db.vr_content.find_one({"id": item_id}, {"_id": 0})
+    return item
+
+# Admin: delete VR content
+@api_router.delete("/admin/vr-content/{item_id}")
+async def admin_delete_vr_content(item_id: str, current_admin: dict = Depends(get_current_admin)):
+    result = await db.vr_content.delete_one({"id": item_id})
+    return {"deleted": result.deleted_count > 0}
+
+# Admin: upload VR video file
+@api_router.post("/admin/upload/vr")
+async def upload_vr_file(file: UploadFile = File(...), current_admin: dict = Depends(get_current_admin)):
+    allowed = {'mp4', 'mov', 'webm', 'mkv', 'avi'}
+    ext = file.filename.split('.')[-1].lower() if file.filename else 'mp4'
+    if ext not in allowed:
+        raise HTTPException(status_code=400, detail=f"Invalid VR file type. Allowed: {allowed}")
+    filename = f"vr_{uuid.uuid4().hex[:8]}_{file.filename}"
+    vr_dir = UPLOAD_DIR / "vr"
+    vr_dir.mkdir(exist_ok=True)
+    file_path = vr_dir / filename
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    return {"url": f"/api/uploads/vr/{filename}", "filename": filename, "size": len(content)}
+
+# Serve VR files
+@api_router.get("/uploads/vr/{filename}")
+async def serve_vr_file(filename: str, request: Request):
+    file_path = UPLOAD_DIR / "vr" / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="VR file not found")
+    ext = filename.rsplit('.', 1)[-1].lower()
+    content_types = {'mp4': 'video/mp4', 'mov': 'video/quicktime', 'webm': 'video/webm', 'mkv': 'video/x-matroska'}
+    content_type = content_types.get(ext, 'video/mp4')
+    file_size = file_path.stat().st_size
+    return FileResponse(file_path, media_type=content_type, headers={'Accept-Ranges': 'bytes', 'Content-Length': str(file_size)})
+
+# ==================== PREMIUM / PURCHASE ENDPOINTS ====================
+
+# Get premium settings/prices
+@api_router.get("/premium/settings")
+async def get_premium_settings():
+    settings = await db.premium_settings.find_one({"id": "main"}, {"_id": 0})
+    if not settings:
+        default = PremiumSettings()
+        return default.model_dump()
+    return settings
+
+# Admin: update premium prices
+@api_router.put("/admin/premium/settings")
+async def admin_update_premium_settings(data: dict, current_admin: dict = Depends(get_current_admin)):
+    data['id'] = 'main'
+    await db.premium_settings.update_one({"id": "main"}, {"$set": data}, upsert=True)
+    settings = await db.premium_settings.find_one({"id": "main"}, {"_id": 0})
+    return settings
+
+# Admin: generate purchase codes
+@api_router.post("/admin/premium/generate-codes")
+async def admin_generate_codes(product_type: str = "complete_tour", count: int = 10, current_admin: dict = Depends(get_current_admin)):
+    import random, string
+    codes = []
+    for _ in range(count):
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        code = f"SPIS-{code[:4]}-{code[4:]}"
+        purchase_code = PurchaseCode(
+            code=code,
+            product_type=product_type,
+            price=0.0,
+        )
+        await db.purchase_codes.insert_one(purchase_code.model_dump())
+        codes.append(code)
+    return {"codes": codes, "product_type": product_type, "count": len(codes)}
+
+# Admin: list purchase codes
+@api_router.get("/admin/premium/codes")
+async def admin_list_codes(product_type: Optional[str] = None, current_admin: dict = Depends(get_current_admin)):
+    query = {}
+    if product_type:
+        query["product_type"] = product_type
+    codes = await db.purchase_codes.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return codes
+
+# Public: verify/redeem purchase code
+@api_router.post("/premium/redeem")
+async def redeem_purchase_code(data: PurchaseVerify):
+    code_doc = await db.purchase_codes.find_one({"code": data.code.upper().strip()})
+    if not code_doc:
+        raise HTTPException(status_code=404, detail="Invalid code")
+    if code_doc.get("is_used"):
+        raise HTTPException(status_code=400, detail="Code already used")
+    if code_doc.get("product_type") != data.product_type:
+        raise HTTPException(status_code=400, detail=f"This code is for {code_doc['product_type']}, not {data.product_type}")
+    
+    await db.purchase_codes.update_one(
+        {"code": data.code.upper().strip()},
+        {"$set": {"is_used": True, "used_by_device": data.device_id, "used_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Record the unlock for this device
+    await db.device_unlocks.update_one(
+        {"device_id": data.device_id},
+        {"$addToSet": {"unlocked": data.product_type}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    
+    return {"success": True, "product_type": data.product_type, "message": f"{data.product_type} unlocked successfully!"}
+
+# Public: check what's unlocked for a device
+@api_router.get("/premium/status/{device_id}")
+async def get_premium_status(device_id: str):
+    doc = await db.device_unlocks.find_one({"device_id": device_id}, {"_id": 0})
+    if not doc:
+        return {"device_id": device_id, "unlocked": []}
+    return doc
+
 # ==================== SEED DATA ====================
 
 @api_router.post("/seed-data")
@@ -1359,6 +1561,20 @@ async def seed_initial_data():
             "total_content": "16 stops in 9 languages = 144 content pieces"
         }
     }
+
+# ==================== EXPORT DOWNLOAD ====================
+@api_router.get("/export/download")
+async def download_export():
+    """Download the complete project export ZIP"""
+    zip_path = "/app/spis-castle-export.zip"
+    if os.path.exists(zip_path):
+        return FileResponse(
+            zip_path,
+            media_type="application/zip",
+            filename="spis-castle-export.zip",
+            headers={"Content-Disposition": "attachment; filename=spis-castle-export.zip"}
+        )
+    return {"error": "Export file not found. Please generate it first."}
 
 # Include the router
 app.include_router(api_router)
