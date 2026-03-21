@@ -226,13 +226,24 @@ export default function AdminDashboard() {
     setShowSettingsModal(true);
   };
 
+  const [editMapUrl, setEditMapUrl] = useState('');
+  const [editSocialWeb, setEditSocialWeb] = useState('');
+  const [editSocialFb, setEditSocialFb] = useState('');
+  const [editSocialIg, setEditSocialIg] = useState('');
+
   const saveSettings = async () => {
     if (!token) return;
     setSaving(true);
     try {
-      const data: any = { site_name: editSiteName, site_subtitle: editSubtitle, welcome_description: editWelcome };
+      const data: any = {
+        site_name: editSiteName,
+        site_subtitle: editSubtitle,
+        welcome_description: editWelcome,
+        social_links: { website: editSocialWeb, facebook: editSocialFb, instagram: editSocialIg },
+      };
       if (editHeroImage) data.default_hero_image = editHeroImage;
       if (editLogoUrl) data.logo_url = editLogoUrl;
+      if (editMapUrl) data.castle_map_url = editMapUrl;
       await axios.put(`${API_BASE_URL}/admin/site-settings`, data, getAuthHeaders());
       setShowSettingsModal(false);
       loadData();
@@ -684,6 +695,15 @@ export default function AdminDashboard() {
               <TextInput style={styles.modalInput} value={editHeroImage} onChangeText={setEditHeroImage} placeholderTextColor={Colors.text.light} placeholder="https://..." />
               <Text style={styles.label}>Logo URL</Text>
               <TextInput style={styles.modalInput} value={editLogoUrl} onChangeText={setEditLogoUrl} placeholderTextColor={Colors.text.light} placeholder="https://..." />
+              <Text style={styles.label}>Castle Map Image URL</Text>
+              <TextInput style={styles.modalInput} value={editMapUrl} onChangeText={setEditMapUrl} placeholderTextColor={Colors.text.light} placeholder="/api/uploads/images/castle_map.png" />
+              <Text style={[styles.label, { marginTop: 20, fontSize: 14, fontWeight: '700', color: Colors.accent }]}>Social & Web Links</Text>
+              <Text style={styles.label}>Website URL</Text>
+              <TextInput style={styles.modalInput} value={editSocialWeb} onChangeText={setEditSocialWeb} placeholderTextColor={Colors.text.light} placeholder="https://..." />
+              <Text style={styles.label}>Facebook URL</Text>
+              <TextInput style={styles.modalInput} value={editSocialFb} onChangeText={setEditSocialFb} placeholderTextColor={Colors.text.light} placeholder="https://facebook.com/..." />
+              <Text style={styles.label}>Instagram URL</Text>
+              <TextInput style={styles.modalInput} value={editSocialIg} onChangeText={setEditSocialIg} placeholderTextColor={Colors.text.light} placeholder="https://instagram.com/..." />
             </ScrollView>
             <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveSettings} disabled={saving}>
               {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>Save Settings</Text>}

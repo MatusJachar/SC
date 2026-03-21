@@ -186,6 +186,8 @@ class SiteSettings(BaseModel):
     enable_offline_mode: bool = True
     enable_sound_therapy: bool = True
     enable_vr_mode: bool = True
+    castle_map_url: Optional[str] = None  # Castle map image URL
+    social_links: Optional[dict] = None  # Social media links
     admin_password: str = "spissky2024"  # Default admin password for setup
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
