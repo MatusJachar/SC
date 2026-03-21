@@ -13,8 +13,8 @@ COPY tour_stops_import.json .
 COPY audio_index.json .
 COPY app_config.json .
 
-RUN mkdir -p /app/uploads/audio /app/uploads/videos /app/uploads/images /app/uploads/images/partners /app/uploads/ambient /app/uploads/vr
+RUN mkdir -p /app/uploads/audio /app/uploads/videos /app/uploads/images/partners /app/uploads/ambient /app/uploads/vr
 
 EXPOSE 8001
 
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "2"]

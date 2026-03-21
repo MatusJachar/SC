@@ -1,56 +1,92 @@
 version: '3.8'
 
 services:
-  # MongoDB Database
   mongodb:
     image: mongo:7.0
-    container_name: spis-castle-mongo
+    container_name: spis-mongo
     restart: always
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
       - ./init-db:/docker-entrypoint-initdb.d
     networks:
-      - spis-network
+      - spis
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # FastAPI Backend
   backend:
     build:
       context: ../backend
       dockerfile: ../docker/Dockerfile.backend
-    container_name: spis-castle-backend
+    container_name: spis-backend
     restart: always
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
     environment:
       - MONGO_URL=mongodb://mongodb:27017
       - DB_NAME=spis_castle
-      - JWT_SECRET=change-this-to-a-secure-secret-key
+      - JWT_SECRET=${JWT_SECRET:-change-this-immediately}
     volumes:
       - ../assets/uploads:/app/uploads
     depends_on:
       - mongodb
     networks:
-      - spis-network
+      - spis
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
-    container_name: spis-castle-nginx
+    container_name: spis-nginx
     restart: always
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
     depends_on:
       - backend
     networks:
-      - spis-network
+      - spis
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  # Auto-renew SSL certificates
+  certbot:
+    image: certbot/certbot
+    container_name: spis-certbot
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - spis
 
 volumes:
   mongo_data:
+  certbot_conf:
+  certbot_www:
 
 networks:
-  spis-network:
+  spis:
     driver: bridge
