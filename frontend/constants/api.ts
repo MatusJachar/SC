@@ -4,8 +4,10 @@ import Constants from 'expo-constants';
 const getApiBaseUrl = () => {
   const backendUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL 
     || process.env.EXPO_PUBLIC_BACKEND_URL
-    || 'https://heritage-audio-guide.preview.emergentagent.com';
-  return `${backendUrl}/api`;
+    || '';
+  if (backendUrl) return `${backendUrl}/api`;
+  // Fallback for local development
+  return 'http://localhost:8001/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
