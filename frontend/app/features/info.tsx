@@ -256,16 +256,37 @@ export default function VisitorInfoScreen() {
             </Text>
           </View>
 
-          {/* Taxi */}
+          {/* Transport & Airport Lift */}
           <View style={styles.transportCard}>
             <View style={styles.transportHeader}>
-              <Ionicons name="call" size={22} color="#E91E63" />
-              <Text style={styles.transportTitle}>Pickup / Taxi</Text>
+              <Ionicons name="airplane" size={22} color="#E91E63" />
+              <Text style={styles.transportTitle}>Transport & Airport Lift</Text>
             </View>
             <Text style={styles.transportText}>
-              From Spi{'\u0161'}sk{'\u00E9'} Podhradie to Pre{'\u0161'}ov, Spi{'\u0161'}sk{'\u00E1'} Nov{'\u00E1'} Ves, Poprad
+              Need a ride to the airport or city? We offer transport services to:
+            </Text>
+            <Text style={styles.transportDetail}>
+              {'\u2022'} Poprad Airport (Tatry Airport){'\n'}{'\u2022'} Ko{'\u0161'}ice International Airport{'\n'}{'\u2022'} Pre{'\u0161'}ov city{'\n'}{'\u2022'} Spi{'\u0161'}sk{'\u00E1'} Nov{'\u00E1'} Ves, Poprad and surroundings
             </Text>
             <Pressable style={styles.phoneButton} onPress={() => Linking.openURL('tel:0944376007')}>
+              <Ionicons name="call" size={16} color="#fff" />
+              <Text style={styles.phoneButtonText}>0944 376 007</Text>
+            </Pressable>
+          </View>
+
+          {/* Personal Tour Guide */}
+          <View style={[styles.transportCard, { borderColor: '#D4A017', borderWidth: 1 }]}>
+            <View style={styles.transportHeader}>
+              <Ionicons name="person" size={22} color="#D4A017" />
+              <Text style={[styles.transportTitle, { color: '#D4A017' }]}>Personal Tour Guide</Text>
+            </View>
+            <Text style={styles.transportText}>
+              Discover more of the region and nature with a personal tour guide. Explore the hidden gems of Spi{'\u0161'} region, hiking trails, nearby castles, caves, and authentic Slovak countryside.
+            </Text>
+            <Text style={styles.transportDetail}>
+              {'\u2022'} Guided tours of Spi{'\u0161'} Castle and surroundings{'\n'}{'\u2022'} Nature & hiking excursions{'\n'}{'\u2022'} Regional sightseeing (Levo{'\u010D'}a, Slovak Paradise, High Tatras){'\n'}{'\u2022'} Custom itineraries available
+            </Text>
+            <Pressable style={[styles.phoneButton, { backgroundColor: '#D4A017' }]} onPress={() => Linking.openURL('tel:0944376007')}>
               <Ionicons name="call" size={16} color="#fff" />
               <Text style={styles.phoneButtonText}>0944 376 007</Text>
             </Pressable>
