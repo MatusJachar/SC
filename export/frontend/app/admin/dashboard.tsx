@@ -40,7 +40,7 @@ export default function AdminDashboard() {
   const [tourStops, setTourStops] = useState<TourStop[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [settings, setSettings] = useState<SiteSettingsData | null>(null);
-  const [activeTab, setActiveTab] = useState<'stops' | 'settings' | 'qrcodes' | 'shop' | 'videos' | 'vr' | 'premium'>('stops');
+  const [activeTab, setActiveTab] = useState<'stops' | 'settings' | 'qrcodes' | 'shop' | 'videos' | 'vr' | 'premium' | 'partners'>('stops');
   const [editingStop, setEditingStop] = useState<TourStop | null>(null);
   const [editingLang, setEditingLang] = useState<string>('en');
   const [editTitle, setEditTitle] = useState('');
@@ -98,11 +98,24 @@ export default function AdminDashboard() {
   // Premium management
   const [premiumSettings, setPremiumSettings] = useState<any>(null);
   const [purchaseCodes, setPurchaseCodes] = useState<any[]>([]);
-  const [editCompleteTourPrice, setEditCompleteTourPrice] = useState('1.99');
-  const [editVRPrice, setEditVRPrice] = useState('2.99');
-  const [editBundlePrice, setEditBundlePrice] = useState('3.99');
+  const [editCompleteTourPrice, setEditCompleteTourPrice] = useState('0.99');
+  const [editVRPrice, setEditVRPrice] = useState('1.99');
+  const [editBundlePrice, setEditBundlePrice] = useState('2.99');
   const [codeGenType, setCodeGenType] = useState('vr_experience');
   const [codeGenCount, setCodeGenCount] = useState('10');
+
+  // Partners management
+  const [partnersList, setPartnersList] = useState<any[]>([]);
+  const [editingPartner, setEditingPartner] = useState<any>(null);
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [partnerName, setPartnerName] = useState('');
+  const [partnerDesc, setPartnerDesc] = useState('');
+  const [partnerLogo, setPartnerLogo] = useState('');
+  const [partnerWebsite, setPartnerWebsite] = useState('');
+  const [partnerPhone, setPartnerPhone] = useState('');
+  const [partnerAddress, setPartnerAddress] = useState('');
+  const [partnerCategory, setPartnerCategory] = useState('restaurant');
+  const [partnerOrder, setPartnerOrder] = useState('0');
   // Image URL editing for tour stops
   const [editImageUrl, setEditImageUrl] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
@@ -138,7 +151,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const auth = { headers: { Authorization: `Bearer ${token}` } };
-      const [stopsRes, langsRes, settingsRes, shopProdsRes, shopSettRes, qrRes, videosRes, vrRes, premRes, codesRes] = await Promise.all([
+      const [stopsRes, langsRes, settingsRes, shopProdsRes, shopSettRes, qrRes, videosRes, vrRes, premRes, codesRes, partnersRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/admin/tour-stops`, auth),
         axios.get(`${API_BASE_URL}/admin/languages`, auth),
         axios.get(`${API_BASE_URL}/admin/site-settings`, auth),
@@ -149,6 +162,7 @@ export default function AdminDashboard() {
         axios.get(`${API_BASE_URL}/admin/vr-content`, auth).catch(() => ({ data: [] })),
         axios.get(`${API_BASE_URL}/premium/settings`).catch(() => ({ data: null })),
         axios.get(`${API_BASE_URL}/admin/premium/codes`, auth).catch(() => ({ data: [] })),
+        axios.get(`${API_BASE_URL}/admin/partners`, auth).catch(() => ({ data: [] })),
       ]);
       setTourStops(stopsRes.data);
       setLanguages(langsRes.data);
@@ -160,10 +174,11 @@ export default function AdminDashboard() {
       setVrItems(vrRes.data);
       setPremiumSettings(premRes.data);
       setPurchaseCodes(codesRes.data);
+      setPartnersList(partnersRes.data);
       if (premRes.data) {
-        setEditCompleteTourPrice(String(premRes.data.complete_tour_price || '1.99'));
-        setEditVRPrice(String(premRes.data.vr_experience_price || '2.99'));
-        setEditBundlePrice(String(premRes.data.bundle_price || '3.99'));
+        setEditCompleteTourPrice(String(premRes.data.complete_tour_price || '0.99'));
+        setEditVRPrice(String(premRes.data.vr_experience_price || '1.99'));
+        setEditBundlePrice(String(premRes.data.bundle_price || '2.99'));
       }
     } catch (err) {
       console.error('Error loading admin data:', err);
@@ -439,14 +454,14 @@ export default function AdminDashboard() {
       {/* Tabs */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
         <View style={styles.tabs}>
-          {(['stops', 'settings', 'qrcodes', 'shop', 'videos', 'vr', 'premium'] as const).map(tab => (
+          {(['stops', 'settings', 'qrcodes', 'shop', 'videos', 'vr', 'premium', 'partners'] as const).map(tab => (
             <Pressable
               key={tab}
               style={[styles.tab, activeTab === tab && styles.tabActive]}
               onPress={() => setActiveTab(tab)}
             >
               <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {tab === 'stops' ? 'Stops' : tab === 'settings' ? 'Settings' : tab === 'qrcodes' ? 'QR' : tab === 'videos' ? 'Videos' : tab === 'vr' ? 'VR' : tab === 'premium' ? 'Premium' : 'Shop'}
+                {tab === 'stops' ? 'Stops' : tab === 'settings' ? 'Settings' : tab === 'qrcodes' ? 'QR' : tab === 'videos' ? 'Videos' : tab === 'vr' ? 'VR' : tab === 'premium' ? 'Premium' : tab === 'partners' ? 'Partners' : 'Shop'}
               </Text>
             </Pressable>
           ))}
@@ -830,6 +845,59 @@ export default function AdminDashboard() {
             ))}
           </>
         )}
+
+        {/* ==================== PARTNERS TAB ==================== */}
+        {activeTab === 'partners' && (
+          <>
+            <View style={styles.shopHeader}>
+              <Text style={styles.sectionTitle}>Partners ({partnersList.length})</Text>
+              <Pressable style={styles.addProductBtn} onPress={() => {
+                setEditingPartner(null);
+                setPartnerName(''); setPartnerDesc(''); setPartnerLogo('');
+                setPartnerWebsite(''); setPartnerPhone(''); setPartnerAddress('');
+                setPartnerCategory('restaurant'); setPartnerOrder(String(partnersList.length + 1));
+                setShowPartnerModal(true);
+              }}>
+                <Ionicons name="add" size={20} color={Colors.white} />
+                <Text style={styles.addProductText}>Add Partner</Text>
+              </Pressable>
+            </View>
+            {partnersList.map(item => (
+              <View key={item.id} style={styles.productAdminCard}>
+                <View style={[styles.productAdminInfo, { flex: 1 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="business" size={16} color="#00BCD4" />
+                    <Text style={styles.productAdminName}>{item.name}</Text>
+                  </View>
+                  <Text style={[styles.productAdminDesc, { fontWeight: '600', color: '#00BCD4' }]}>{item.category}</Text>
+                  {item.phone ? <Text style={styles.productAdminDesc}>{item.phone}</Text> : null}
+                  {item.logo_url ? <Text style={[styles.productAdminDesc, { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', fontSize: 11 }]} numberOfLines={1}>Logo: {item.logo_url}</Text> : <Text style={[styles.productAdminDesc, { color: Colors.error }]}>No logo</Text>}
+                </View>
+                <View style={styles.productActions}>
+                  <Pressable style={styles.productActionBtn} onPress={() => {
+                    setEditingPartner(item);
+                    setPartnerName(item.name); setPartnerDesc(item.description || '');
+                    setPartnerLogo(item.logo_url || ''); setPartnerWebsite(item.website || '');
+                    setPartnerPhone(item.phone || ''); setPartnerAddress(item.address || '');
+                    setPartnerCategory(item.category || 'restaurant');
+                    setPartnerOrder(String(item.order || 0));
+                    setShowPartnerModal(true);
+                  }}>
+                    <Ionicons name="create" size={18} color={Colors.accent} />
+                  </Pressable>
+                  <Pressable style={styles.productActionBtn} onPress={async () => {
+                    try {
+                      await axios.delete(`${API_BASE_URL}/admin/partners/${item.id}`, getAuthHeaders());
+                      setPartnersList(prev => prev.filter(p => p.id !== item.id));
+                    } catch {}
+                  }}>
+                    <Ionicons name="trash" size={18} color={Colors.error} />
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </>
+        )}
       </ScrollView>
       <Modal visible={showEditModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
@@ -1068,6 +1136,59 @@ export default function AdminDashboard() {
               setSaving(false);
             }} disabled={saving}>
               {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{editingVR ? 'Update VR' : 'Add VR Content'}</Text>}
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+      {/* ==================== PARTNER EDIT MODAL ==================== */}
+      <Modal visible={showPartnerModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{editingPartner ? 'Edit Partner' : 'Add Partner'}</Text>
+              <Pressable onPress={() => setShowPartnerModal(false)}>
+                <Ionicons name="close" size={24} color={Colors.text.primary} />
+              </Pressable>
+            </View>
+            <ScrollView style={styles.modalScroll}>
+              <Text style={styles.label}>Business Name</Text>
+              <TextInput style={styles.modalInput} value={partnerName} onChangeText={setPartnerName} placeholderTextColor={Colors.text.light} placeholder="Restaurant Spiš" />
+              <Text style={styles.label}>Category</Text>
+              <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                {['restaurant', 'hotel', 'shop', 'transport', 'attraction', 'other'].map(cat => (
+                  <Pressable key={cat} style={[styles.tab, partnerCategory === cat && styles.tabActive, { paddingHorizontal: 10, paddingVertical: 5 }]} onPress={() => setPartnerCategory(cat)}>
+                    <Text style={[styles.tabText, partnerCategory === cat && styles.tabTextActive, { fontSize: 11 }]}>{cat}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Text style={styles.label}>Description</Text>
+              <TextInput style={[styles.modalInput, styles.modalTextarea]} value={partnerDesc} onChangeText={setPartnerDesc} multiline placeholderTextColor={Colors.text.light} placeholder="Best traditional Slovak cuisine near the castle..." />
+              <Text style={styles.label}>Logo URL</Text>
+              <TextInput style={styles.modalInput} value={partnerLogo} onChangeText={setPartnerLogo} placeholderTextColor={Colors.text.light} placeholder="/api/uploads/images/partners/logo.png" />
+              <Text style={styles.label}>Website</Text>
+              <TextInput style={styles.modalInput} value={partnerWebsite} onChangeText={setPartnerWebsite} placeholderTextColor={Colors.text.light} placeholder="https://example.com" />
+              <Text style={styles.label}>Phone</Text>
+              <TextInput style={styles.modalInput} value={partnerPhone} onChangeText={setPartnerPhone} placeholderTextColor={Colors.text.light} placeholder="+421 944 376 007" />
+              <Text style={styles.label}>Address</Text>
+              <TextInput style={styles.modalInput} value={partnerAddress} onChangeText={setPartnerAddress} placeholderTextColor={Colors.text.light} placeholder="Spišské Podhradie, Slovakia" />
+              <Text style={styles.label}>Order</Text>
+              <TextInput style={styles.modalInput} value={partnerOrder} onChangeText={setPartnerOrder} keyboardType="number-pad" placeholderTextColor={Colors.text.light} />
+            </ScrollView>
+            <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={async () => {
+              setSaving(true);
+              try {
+                const data = { name: partnerName, description: partnerDesc, logo_url: partnerLogo || null, website: partnerWebsite || null, phone: partnerPhone || null, address: partnerAddress || null, category: partnerCategory, order: parseInt(partnerOrder) || 0 };
+                if (editingPartner) {
+                  await axios.put(`${API_BASE_URL}/admin/partners/${editingPartner.id}`, data, getAuthHeaders());
+                } else {
+                  await axios.post(`${API_BASE_URL}/admin/partners`, data, getAuthHeaders());
+                }
+                setShowPartnerModal(false);
+                loadData();
+              } catch { Alert.alert('Error', 'Failed to save partner'); }
+              setSaving(false);
+            }} disabled={saving}>
+              {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>{editingPartner ? 'Update Partner' : 'Add Partner'}</Text>}
             </Pressable>
           </View>
         </View>

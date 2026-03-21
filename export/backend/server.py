@@ -335,15 +335,63 @@ class PurchaseCode(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class PremiumSettings(BaseModel):
-    complete_tour_price: float = 1.99
-    vr_experience_price: float = 2.99
-    bundle_price: float = 3.99
+    complete_tour_price: float = 0.99
+    vr_experience_price: float = 1.99
+    bundle_price: float = 2.99
     currency: str = "EUR"
 
 class PurchaseVerify(BaseModel):
     code: str
     product_type: str
     device_id: str
+
+# ==================== PARTNER BUSINESS MODELS ====================
+
+class PartnerBusiness(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str = ""
+    logo_url: Optional[str] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    category: str = "restaurant"  # restaurant, hotel, shop, transport, attraction, other
+    is_active: bool = True
+    order: int = 0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class PartnerBusinessCreate(BaseModel):
+    name: str
+    description: str = ""
+    logo_url: Optional[str] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    category: str = "restaurant"
+    order: int = 0
+
+class PartnerBusinessUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    logo_url: Optional[str] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    category: Optional[str] = None
+    is_active: Optional[bool] = None
+    order: Optional[int] = None
+
+# ==================== TIP / DONATION MODEL ====================
+
+class TipRecord(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    amount: float
+    currency: str = "EUR"
+    device_id: str
+    message: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # ==================== AUTH HELPERS ====================
 
@@ -1197,6 +1245,107 @@ async def get_premium_status(device_id: str):
     if not doc:
         return {"device_id": device_id, "unlocked": []}
     return doc
+
+# ==================== PARTNER BUSINESS ENDPOINTS ====================
+
+# Public: list active partner businesses
+@api_router.get("/partners")
+async def get_partners():
+    items = await db.partners.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(50)
+    return items
+
+# Admin: list all partner businesses
+@api_router.get("/admin/partners")
+async def admin_get_partners(current_admin: dict = Depends(get_current_admin)):
+    items = await db.partners.find({}, {"_id": 0}).sort("order", 1).to_list(50)
+    return items
+
+# Admin: create partner business
+@api_router.post("/admin/partners")
+async def admin_create_partner(data: PartnerBusinessCreate, current_admin: dict = Depends(get_current_admin)):
+    item = PartnerBusiness(**data.model_dump())
+    await db.partners.insert_one(item.model_dump())
+    return item.model_dump()
+
+# Admin: update partner business
+@api_router.put("/admin/partners/{item_id}")
+async def admin_update_partner(item_id: str, data: PartnerBusinessUpdate, current_admin: dict = Depends(get_current_admin)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if update_data:
+        await db.partners.update_one({"id": item_id}, {"$set": update_data})
+    item = await db.partners.find_one({"id": item_id}, {"_id": 0})
+    return item
+
+# Admin: delete partner business
+@api_router.delete("/admin/partners/{item_id}")
+async def admin_delete_partner(item_id: str, current_admin: dict = Depends(get_current_admin)):
+    result = await db.partners.delete_one({"id": item_id})
+    return {"deleted": result.deleted_count > 0}
+
+# Admin: upload partner logo
+@api_router.post("/admin/upload/partner-logo")
+async def upload_partner_logo(file: UploadFile = File(...), current_admin: dict = Depends(get_current_admin)):
+    allowed = {'png', 'jpg', 'jpeg', 'webp', 'svg'}
+    ext = file.filename.split('.')[-1].lower() if file.filename else 'png'
+    if ext not in allowed:
+        raise HTTPException(status_code=400, detail=f"Invalid image type. Allowed: {allowed}")
+    filename = f"partner_{uuid.uuid4().hex[:8]}.{ext}"
+    img_dir = UPLOAD_DIR / "images" / "partners"
+    img_dir.mkdir(parents=True, exist_ok=True)
+    file_path = img_dir / filename
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    return {"url": f"/api/uploads/images/partners/{filename}", "filename": filename}
+
+# Serve partner logos
+@api_router.get("/uploads/images/partners/{filename}")
+async def serve_partner_logo(filename: str):
+    file_path = UPLOAD_DIR / "images" / "partners" / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path)
+
+# ==================== TIP / SUPPORT DEVELOPER ENDPOINTS ====================
+
+# Record a tip/donation
+@api_router.post("/tips")
+async def record_tip(amount: float, device_id: str, message: Optional[str] = None):
+    tip = TipRecord(amount=amount, device_id=device_id, message=message)
+    await db.tips.insert_one(tip.model_dump())
+    return {"success": True, "message": "Thank you for your support!", "tip_id": tip.id}
+
+# Admin: view tips
+@api_router.get("/admin/tips")
+async def admin_get_tips(current_admin: dict = Depends(get_current_admin)):
+    tips = await db.tips.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    total = sum(t.get("amount", 0) for t in tips)
+    return {"tips": tips, "total": total, "count": len(tips)}
+
+# Admin: bulk code generation with custom naming
+@api_router.post("/admin/premium/generate-bulk")
+async def admin_generate_bulk_codes(
+    product_type: str = "complete_tour",
+    count: int = 20,
+    group_name: str = "bulk",
+    discount_price: float = 0.0,
+    current_admin: dict = Depends(get_current_admin)
+):
+    import random, string
+    codes = []
+    for i in range(count):
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        code = f"SPIS-{code[:4]}-{code[4:]}"
+        purchase_code = PurchaseCode(
+            code=code,
+            product_type=product_type,
+            price=discount_price,
+        )
+        doc = purchase_code.model_dump()
+        doc["group_name"] = group_name
+        await db.purchase_codes.insert_one(doc)
+        codes.append(code)
+    return {"codes": codes, "product_type": product_type, "group_name": group_name, "count": len(codes)}
 
 # ==================== SEED DATA ====================
 

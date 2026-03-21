@@ -34,7 +34,7 @@ services:
     networks:
       - spis-network
 
-  # Nginx Reverse Proxy (serves frontend + proxies API)
+  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: spis-castle-nginx
