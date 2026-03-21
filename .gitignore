@@ -101,3 +101,7 @@ backend/uploads/videos/spissky_hrad.mp4
 *.env
 *.env.*
 spis-castle-export.zip
+-e 
+# Environment files
+*.env
+*.env.*
