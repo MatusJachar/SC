@@ -100,3 +100,4 @@ backend/uploads/videos/spissky_hrad.mp4
 # Environment files
 *.env
 *.env.*
+spis-castle-export.zip

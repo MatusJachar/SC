@@ -13,7 +13,7 @@ from typing import Dict, List, Tuple
 import time
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://spis-audio-explore.preview.emergentagent.com/api"
+BACKEND_URL = "https://heritage-audio-guide.preview.emergentagent.com/api"
 
 # Admin credentials
 ADMIN_CREDENTIALS = {"username": "admin", "password": "admin123"}

@@ -1,0 +1,150 @@
+<analysis>**original_problem_statement**: 
+The user wants an Ultimate modern audio guide app for Spiš Castle. Requirements include an easily editable front page, descriptions, logos, tour stops, audio, pictures, and QR codes accessible via a mobile-friendly admin panel. Offline functionality is paramount. It must feature 3 distinct tour types (Express, Family, Complete) with specific stop filtering, dark-themed UI, and yellowish-orange icons. The app also features a Souvenir Shop (21 items), a Video section (with 3 compressed videos), and a comprehensive Information page (prices, events, transport, tour guides). Finally, the user requested a **Complete Export** of the entire project (backend, frontend, DB dump, and media assets) for self-hosting.
+
+**User's preferred language**: English (Note: The user writes in heavily stylized/typo-prone English, but English is the primary language used). INSTRUCT next agent to respond in English.
+
+**what currently exists?** 
+A fully functional, dark-themed Expo React Native mobile app with a FastAPI + MongoDB backend. It includes a working Admin Dashboard (protected by JWT) allowing complete CRUD for Tour Stops, Site Settings, Shop Products, QR Codes, and Videos. All 17 stops (13 stops + 4 legends) have valid multi-megabyte audio files for 9 languages. The app supports offline caching, three tailored tour routes, and displays a video showcase. The UI has been heavily customized based on user feedback.
+
+**Last working item**:
+- **Last item agent was working**: The agent was cleaning up the Home page (making it icon-focused, hiding extra nearby attractions except Levoča), adding  and  to backend/admin Site Settings, and preparing to execute the Complete Project Export requested by the user. 
+- **Status**: IN PROGRESS
+- **Agent Testing Done**: Y (Verified the new Home Page UI via screenshot)
+- **Which testing method agent to use?**: manual testing by bash/zip for the export, and screenshot tool for UI verification.
+- **User Testing Done**: N
+
+**All Pending/In progress Issue list**:
+Issue 1: Complete the Full Project Export (P0)
+Issue 2: Clean up duplicated info in the Transport/Info section (P1)
+Issue 3: Implement Castle Map Thumbnail UI (P1)
+Issue 4: Implement Social Media links under Events UI (P2)
+
+Issues Detail:
+- Issue 1: Complete the Full Project Export
+  - Attempted fixes: Agent acknowledged the request and started prepping the UI before pulling the zip, but context window ran out.
+  - Next debug checklist: 
+    - Create a structured export folder: .
+    - Copy backend files (, ).
+    - Dump MongoDB collections (e.g., via ).
+    - Copy all audio/video/image assets from .
+    - Copy frontend code ().
+    - Zip the directory and provide the download script/path to the user.
+  - Why fix this issue and what will be achieved with the fix? Fulfills the user's explicit final request to self-host the application.
+  - Status: NOT STARTED
+  - Is recurring issue? N
+  - Should Test frontend/backend/both after fix? NA (Just verify zip integrity)
+  - Blocked on other issue: None
+
+- Issue 2: Clean up duplicated info in the Transport/Info section
+  - Attempted fixes: Agent updated the Home page but might not have removed the duplicated Fee and Visitor Info from the Transport UI.
+  - Next debug checklist: Check  to ensure under Transport there isn't duplicated fee/visitor info (no need fee and vititor info duplicated... just leave ther evryting as from Transport down).
+  - Why fix this issue and what will be achieved with the fix? Meets user's request for a cleaner Info page.
+  - Status: NOT STARTED
+  - Is recurring issue? N
+  - Should Test frontend/backend/both after fix? Frontend
+
+- Issue 3: Implement Castle Map Thumbnail UI
+  - Attempted fixes: Agent added  to backend and admin panel but needs to ensure it displays correctly on the frontend (small thumbnail, click to open bigger).
+  - Next debug checklist: Review  or info page to ensure the  renders a clickable image modal.
+  - Why fix this issue and what will be achieved with the fix? Meets explicit user UI requirement.
+  - Status: IN PROGRESS
+  - Is recurring issue? N
+  - Should Test frontend/backend/both after fix? Frontend
+
+**In progress Task List**: 
+Task 1: Generate Full Project Zip Export
+  - Where to resume: Bash terminal. Gather all components (FastAPI, Expo, Mongo Dump, MP3s/MP4s) into a unified  file for the user.
+  - What will be achieved with this? User can migrate the app to their own server.
+  - Status: NOT STARTED
+  - Should Test frontend/backend/both after fix? NA
+
+**Upcoming and Future Tasks**:
+Upcoming Tasks:
+- Verify Social Media Links render correctly under Events based on the newly added  backend field (P1).
+
+**Completed work in this session**:
+- Admin panel text visibility fixed (DONE)
+- Generated full TTS audio files for missing/placeholder Slovak audio (DONE)
+- Implemented Dark Theme UI for Tour list and Language selection (DONE)
+- Added 3 Tour Types (Express=30m, Family, Complete) with customized stop filtering (DONE)
+- Unified all stop icons to yellowish-orange color (DONE)
+- Made stop numbers, names, descriptions, and audio URLs editable via Admin (DONE)
+- Compressed 3 massive video files (178MB -> 23.5MB) and integrated a new Video section with Admin CRUD (DONE)
+- Updated Entrance Fees (+2 EUR) and added new Transport/Tour Guide contacts (DONE)
+- Simplified Home Page, replaced emojis with CDN flag images for cross-platform compatibility (DONE)
+
+**Earlier issues found/mentioned but not fixed**:
+None.
+
+**Known issue recurrence from previous fork**:
+- Issue recurrence in previous fork: Audio files missing/being small placeholders. (Resolved in this session).
+- Recurrence count: 0
+- Status: RESOLVED
+
+**Code Architecture**:
+- : FastAPI server handling endpoints for tours, admin auth, shop, videos, and settings.
+- : Contains , , and  directories.
+- : Expo React Native app.
+  - : Home page.
+  - , , : Tour navigation and details.
+  - : Admin interface for editing content.
+  - : Info, Video, and Shop screens.
+  - : Global state, caching, offline logic.
+
+**Key Technical Concepts**:
+- Frontend: React Native, Expo Router, AsyncStorage (for offline mode).
+- Backend: FastAPI, Motor (Async MongoDB), PyJWT (Admin Auth), Uvicorn.
+- Database: MongoDB.
+
+**key DB schema**:
+- : {id, stop_type (tour/legend), stop_number, translations: {language_code: {title, description, audio_url}}}
+- : {id, title, description, video_url, order}
+- : {hero_image_url, castle_map_url, social_links}
+
+**changes in tech stack**:
+None
+
+**All files of reference**:
+-  (Modified for clean UI)
+-  (Modified to support videos and new site settings)
+-  (Heavily updated with editing capabilities)
+-  (Created for video playback)
+-  (Modified for new prices and transport/guide info)
+
+**Areas that need refactoring**:
+The  file is exceeding 1300 lines; splitting routers (admin, public, shop) into separate files would be beneficial for the exported project.
+
+**key api endpoints**:
+- 
+- 
+- 
+- 
+- 
+
+**Critical Info for New Agent**:
+The user's ultimate goal right now is a **complete dump/export** of the project so they can host it themselves. Do not get caught in an endless loop of minor UI tweaks. Create the export archive as perfectly requested in message 420.
+*Important Note*: Emojis for languages were replaced with image URIs because native emojis failed to render consistently. Do not revert to emojis.
+
+**documents and test reports created in this job**:
+-  (Updated with backend test results)
+
+**Last 10 User Messages and any pending HUMAN messages**:
+- **Message 420**: Requested cleanup of Home Page (icons, hide nearby attractions except Levoča), remove duplicated fee/info from Transport section, leave social media links under Events. Add an editable small Castle map that expands on click. FINALLY, requests a complete export of all code (backend/frontend), DB dump, audio/video assets into a structured folder/zip for self-hosting. (PENDING EXPORT)
+
+**Project Health Check**:
+Healthy. Audio generation, video compression, and UI flows have been heavily verified.
+
+**3rd Party Integrations**:
+None utilizing Emergent LLM keys. Standard Python/React Native libraries used.
+
+**Testing status**:
+- Testing agent used after significant changes: YES (Backend testing agent used successfully)
+- Troubleshoot agent used after agent stuck in loop: NO
+- Test files created: None
+- Known regressions: None
+
+**Credentials to test flow**:
+- Admin login:  / 
+
+**What agent forgot to execute**:
+The agent did not yet generate the final project ZIP file (Code, DB Dump, Assets) as requested in the user's final message, nor fully verify the Info page duplication cleanup.</analysis>

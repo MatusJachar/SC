@@ -203,6 +203,8 @@ class SiteSettingsUpdate(BaseModel):
     enable_offline_mode: Optional[bool] = None
     enable_sound_therapy: Optional[bool] = None
     enable_vr_mode: Optional[bool] = None
+    castle_map_url: Optional[str] = None
+    social_links: Optional[dict] = None
     admin_password: Optional[str] = None
 
 # Souvenir Shop Models
@@ -1357,6 +1359,20 @@ async def seed_initial_data():
             "total_content": "16 stops in 9 languages = 144 content pieces"
         }
     }
+
+# ==================== EXPORT DOWNLOAD ====================
+@api_router.get("/export/download")
+async def download_export():
+    """Download the complete project export ZIP"""
+    zip_path = "/app/spis-castle-export.zip"
+    if os.path.exists(zip_path):
+        return FileResponse(
+            zip_path,
+            media_type="application/zip",
+            filename="spis-castle-export.zip",
+            headers={"Content-Disposition": "attachment; filename=spis-castle-export.zip"}
+        )
+    return {"error": "Export file not found. Please generate it first."}
 
 # Include the router
 app.include_router(api_router)

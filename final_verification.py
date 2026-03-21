@@ -7,7 +7,7 @@ import asyncio
 import aiohttp
 
 async def main():
-    BASE_URL = "https://spis-audio-explore.preview.emergentagent.com/api"
+    BASE_URL = "https://heritage-audio-guide.preview.emergentagent.com/api"
     
     print("🔍 Final Backend Verification Test")
     print("=" * 50)
