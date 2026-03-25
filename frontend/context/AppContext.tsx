@@ -161,17 +161,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
       }
       
-      const [languagesRes, stopsRes, settingsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}${API_ENDPOINTS.languages}`),
+      const [stopsRes, settingsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}${API_ENDPOINTS.tourStops}`),
         axios.get(`${API_BASE_URL}${API_ENDPOINTS.siteSettings}`),
       ]);
-      
-      setLanguages(languagesRes.data);
-      const allStops = stopsRes.data;
-      setTourStops(allStops.filter((s: TourStop) => s.stop_type === 'tour'));
-      setLegends(allStops.filter((s: TourStop) => s.stop_type === 'legend'));
+
+      // TRANSFORMÁCIA: translations[] → content{} + audio{}
+      const rawStops = stopsRes.data || [];
+      const transformedStops = rawStops.map((stop: any) => {
+        const content: Record<string, any> = {};
+        const audio: Record<string, string> = {};
+        (stop.translations || []).forEach((t: any) => {
+          content[t.language_code] = {
+            title: t.title,
+            description: t.description,
+          };
+          if (t.audio_url) {
+            audio[t.language_code] = t.audio_url.startsWith('http')
+              ? t.audio_url
+              : `http://178.104.72.151:8002${t.audio_url}`;
+          }
+        });
+        return { ...stop, content, audio };
+      });
+
+      // Uložiť do state
+      setTourStops(transformedStops.filter((s: any) => s.stop_type === 'tour'));
+      setLegends(transformedStops.filter((s: any) => s.stop_type === 'legend'));
       setSiteSettings(settingsRes.data);
+
+      // Extract languages from first stop's content
+      const firstStop = transformedStops[0];
+      console.log('First stop content:', firstStop?.content);
+      const languageCodes = firstStop?.content ? Object.keys(firstStop.content) : [];
+      console.log('Language codes:', languageCodes);
+      const langs = languageCodes.map(code => ({
+        code,
+        name: code === 'sk' ? 'Slovak' : code === 'en' ? 'English' : code === 'de' ? 'German' : code === 'pl' ? 'Polish' : code === 'hu' ? 'Hungarian' : code === 'ru' ? 'Russian' : code === 'es' ? 'Spanish' : code === 'zh' ? 'Chinese' : code === 'fr' ? 'French' : code,
+        native_name: code === 'sk' ? 'Slovensky' : code === 'en' ? 'English' : code === 'de' ? 'Deutsch' : code === 'pl' ? 'Polski' : code === 'hu' ? 'Magyar' : code === 'ru' ? 'Русский' : code === 'es' ? 'Español' : code === 'zh' ? '中文' : code === 'fr' ? 'Français' : code,
+        flag_emoji: code === 'sk' ? '🇸🇰' : code === 'en' ? '🇬🇧' : code === 'de' ? '🇩🇪' : code === 'pl' ? '🇵🇱' : code === 'hu' ? '🇭🇺' : code === 'ru' ? '🇷🇺' : code === 'es' ? '🇪🇸' : code === 'zh' ? '🇨🇳' : code === 'fr' ? '🇫🇷' : '🏳️',
+        is_active: true,
+        order: 1
+      }));
+      console.log('Generated languages:', langs);
+      setLanguages(langs);
       
       // Cache for offline use
       try {

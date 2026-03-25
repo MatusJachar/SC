@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Spišský Hrad Audio Guide",
-    "slug": "spissky-hrad-audio-guide",
-    "version": "1.0.0",
+    "name": "Spiš Castle Audio Guide",
+    "slug": "spis-castle-audio-guide",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "castle-audio-guide",
+    "scheme": "spis-castle-audio-guide",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -19,6 +19,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.castleaudioguide.spisskyhrad",
+      "versionCode": 2,
       "permissions": []
     },
     "web": {
@@ -28,23 +29,19 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#5D4037"
-        }
-      ]
+      "expo-splash-screen",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
+      "backendUrl": "http://178.104.72.151:8002",
+      "router": {},
       "eas": {
-        "projectId": "spissky-hrad-audio-guide"
+        "projectId": "296e7b0a-7db5-408e-8c5b-eb2cd61eab6b"
       }
-    }
+    },
+    "owner": "replaced"
   }
 }

@@ -26,6 +26,8 @@ export interface TourStop {
   image_url: string | null;
   gallery_images?: string[];
   translations: Translation[];
+  content: Record<string, { title: string; description: string }>;
+  audio: Record<string, string>;
   duration_seconds: number;
   ambient_sound_url?: string | null;
   qr_code_id: string;
