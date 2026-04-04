@@ -131,6 +131,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (ambientSound) ambientSound.unloadAsync();
     };
   }, [sound, ambientSound]);
+    // Load data on mount 
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const setSelectedLanguage = async (lang: string) => {
     setSelectedLanguageState(lang);
@@ -179,7 +183,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           if (t.audio_url) {
             audio[t.language_code] = t.audio_url.startsWith('http')
               ? t.audio_url
-              : `http://178.104.72.151:8002${t.audio_url}`;
+              : `${API_BASE_URL}${t.audio_url}`;
           }
         });
         return { ...stop, content, audio };

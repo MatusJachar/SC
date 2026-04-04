@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider } from '../context/AppContext';
 import { Colors } from '../constants/colors';

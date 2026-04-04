@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Spiš Castle Audio Guide",
-    "slug": "spis-castle-audio-guide",
+    "slug": "spissky-hrad-audio-guide",
     "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,12 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.castleaudioguide.spisskyhrad"
+      "bundleIdentifier": "com.castleaudioguide.spisskyhrad",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,6 +25,7 @@
       "edgeToEdgeEnabled": true,
       "package": "com.castleaudioguide.spisskyhrad",
       "versionCode": 2,
+      "usesCleartextTraffic": true,
       "permissions": []
     },
     "web": {
@@ -30,13 +36,21 @@
     "plugins": [
       "expo-router",
       "expo-splash-screen",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "backendUrl": "http://178.104.72.151:8002",
+      "backendUrl": "http://178.104.72.151:8001",
       "router": {},
       "eas": {
         "projectId": "296e7b0a-7db5-408e-8c5b-eb2cd61eab6b"

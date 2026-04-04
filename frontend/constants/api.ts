@@ -12,8 +12,7 @@ const getApiBaseUrl = () => {
   return 'http://localhost:8001/api';
 };
 
-export const API_BASE_URL = getApiBaseUrl();
-
+export const API_BASE_URL = 'http://178.104.72.151:8002/api';
 export const API_ENDPOINTS = {
   health: '/health',
   languages: '/languages',
