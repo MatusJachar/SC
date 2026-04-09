@@ -3,4 +3,5 @@ node_modules/
 .metro-cache/
 android/
 ios/
-.emergent/
+android/build/
+android/.gradle/
