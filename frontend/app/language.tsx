@@ -22,10 +22,26 @@ const FLAG_IMAGES: Record<string, string> = {
   zh: 'https://flagcdn.com/w80/cn.png',
 };
 
+// Hardcoded fallback languages — always show all 9
+const FALLBACK_LANGUAGES = [
+  { code: 'sk', name: 'Slovak',    native_name: 'Slovenčina' },
+  { code: 'en', name: 'English',   native_name: 'English' },
+  { code: 'de', name: 'German',    native_name: 'Deutsch' },
+  { code: 'pl', name: 'Polish',    native_name: 'Polski' },
+  { code: 'hu', name: 'Hungarian', native_name: 'Magyar' },
+  { code: 'fr', name: 'French',    native_name: 'Français' },
+  { code: 'es', name: 'Spanish',   native_name: 'Español' },
+  { code: 'ru', name: 'Russian',   native_name: 'Русский' },
+  { code: 'zh', name: 'Chinese',   native_name: '中文' },
+];
+
 export default function LanguageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { languages, setSelectedLanguage } = useApp();
+
+  // Use hardcoded fallback if API hasn't loaded languages yet
+  const displayLanguages = languages.length > 0 ? languages : FALLBACK_LANGUAGES;
 
   const handleLanguageSelect = (langCode: string) => {
     setSelectedLanguage(langCode);
@@ -59,7 +75,7 @@ export default function LanguageScreen() {
         <Text style={styles.subtitle}>Select your preferred language</Text>
 
         {/* Language List */}
-        {languages.map((lang) => (
+        {displayLanguages.map((lang) => (
           <Pressable
             key={lang.code}
             style={({ pressed }) => [styles.langCard, pressed && styles.langCardPressed]}

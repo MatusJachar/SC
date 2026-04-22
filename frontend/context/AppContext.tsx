@@ -150,6 +150,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     try {
       console.log('Loading data from:', API_BASE_URL);
       
+      // Always clear old cache to ensure fresh data
+      await AsyncStorage.removeItem('offlineData');
+      
       // Try to load from offline cache first if in offline mode
       if (isOfflineMode) {
         const cached = await AsyncStorage.getItem('offlineData');
@@ -179,11 +182,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           content[t.language_code] = {
             title: t.title,
             description: t.description,
+            short_description: t.short_description || t.description,
           };
           if (t.audio_url) {
-            audio[t.language_code] = t.audio_url.startsWith('http')
-              ? t.audio_url
-              : `${API_BASE_URL}${t.audio_url}`;
+            const rawUrl = t.audio_url;
+            let fullAudioUrl: string;
+            if (rawUrl.startsWith('http')) {
+              fullAudioUrl = rawUrl;
+            } else if (rawUrl.startsWith('/api/')) {
+              // Remove /api prefix since API_BASE_URL already includes /api
+              const baseUrl = API_BASE_URL.replace('/api', '');
+              fullAudioUrl = `${baseUrl}${rawUrl}`;
+            } else {
+              fullAudioUrl = `${API_BASE_URL}${rawUrl}`;
+            }
+            audio[t.language_code] = fullAudioUrl;
           }
         });
         return { ...stop, content, audio };

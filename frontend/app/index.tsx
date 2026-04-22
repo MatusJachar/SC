@@ -40,7 +40,7 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container} bounces={false} showsVerticalScrollIndicator={false}>
-      {/* ===== HERO ===== */}
+      {/* HERO */}
       <View style={[styles.heroSection, { paddingTop: insets.top + 20 }]}>
         <Image source={{ uri: CASTLE_IMAGE }} style={styles.heroBackground} resizeMode="cover" blurRadius={Platform.OS === 'web' ? 0 : 3} />
         <View style={styles.heroOverlay} />
@@ -50,12 +50,8 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.title}>{'Spi\u0161 Castle'}</Text>
           <Text style={styles.subtitle}>Audio Tour Guide</Text>
-          <Text style={styles.descWhite}>
-            Explore the largest UNESCO castle complex in Central Europe.
-          </Text>
-          <Text style={styles.descYellow}>
-            Audio guides in 9 languages with offline support.
-          </Text>
+          <Text style={styles.descWhite}>Explore the largest UNESCO castle complex in Central Europe.</Text>
+          <Text style={styles.descYellow}>Audio guides in 9 languages with offline support.</Text>
           <Pressable
             style={({ pressed }) => [styles.startButton, pressed && styles.startButtonPressed]}
             onPress={() => router.push('/language')}
@@ -82,7 +78,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* ===== ICON MENU ===== */}
+      {/* ICON MENU — 5 per row, 6th wraps to 2nd row */}
       <View style={styles.menuSection}>
         <View style={styles.iconRow}>
           <Pressable style={styles.iconItem} onPress={() => router.push('/features/info')}>
@@ -91,11 +87,11 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.iconLabel}>Info</Text>
           </Pressable>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/shop')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#FF9800' }]}>
-              <Ionicons name="bag" size={24} color="#fff" />
+          <Pressable style={styles.iconItem} onPress={() => router.push('/features/partners')}>
+            <View style={[styles.iconCircle, { backgroundColor: '#00BCD4' }]}>
+              <Ionicons name="business" size={24} color="#fff" />
             </View>
-            <Text style={styles.iconLabel}>Shop</Text>
+            <Text style={styles.iconLabel}>Partners</Text>
           </Pressable>
           <Pressable style={styles.iconItem} onPress={() => router.push('/features/video')}>
             <View style={[styles.iconCircle, { backgroundColor: '#E91E63' }]}>
@@ -109,34 +105,38 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.iconLabel}>Transport</Text>
           </Pressable>
+          {/* VR — schované, bude aktivované keď budú správne videá
           <Pressable style={styles.iconItem} onPress={() => router.push('/features/vr')}>
             <View style={[styles.iconCircle, { backgroundColor: '#7C4DFF' }]}>
               <Ionicons name="glasses" size={24} color="#fff" />
             </View>
             <Text style={styles.iconLabel}>VR</Text>
           </Pressable>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/partners')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#00BCD4' }]}>
-              <Ionicons name="business" size={24} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>Partners</Text>
-          </Pressable>
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/support')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#F44336' }]}>
-              <Ionicons name="heart" size={24} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>Support</Text>
-          </Pressable>
+          */}
           <Pressable style={styles.iconItem} onPress={() => router.push('/admin')}>
             <View style={[styles.iconCircle, { backgroundColor: '#9C27B0' }]}>
               <Ionicons name="settings" size={24} color="#fff" />
             </View>
             <Text style={styles.iconLabel}>Admin</Text>
           </Pressable>
+          {/* Shop — odkomentovať za ~2 mesiace */}
+          {/* <Pressable style={styles.iconItem} onPress={() => router.push('/features/shop')}>
+            <View style={[styles.iconCircle, { backgroundColor: '#FF9800' }]}>
+              <Ionicons name="bag" size={24} color="#fff" />
+            </View>
+            <Text style={styles.iconLabel}>Shop</Text>
+          </Pressable> */}
+          {/* Support — odkomentovať keď bude pripravené */}
+          {/* <Pressable style={styles.iconItem} onPress={() => router.push('/features/support')}>
+            <View style={[styles.iconCircle, { backgroundColor: '#F44336' }]}>
+              <Ionicons name="heart" size={24} color="#fff" />
+            </View>
+            <Text style={styles.iconLabel}>Support</Text>
+          </Pressable> */}
         </View>
       </View>
 
-      {/* ===== CASTLE MAP ===== */}
+      {/* CASTLE MAP */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Ionicons name="map" size={20} color="#D4A017" />
@@ -159,7 +159,7 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* ===== NEARBY: LEVOČA ===== */}
+      {/* NEARBY */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Ionicons name="compass" size={20} color="#D4A017" />
@@ -180,7 +180,7 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* ===== OPENING HOURS ===== */}
+      {/* OPENING HOURS */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Ionicons name="time" size={20} color="#D4A017" />
@@ -207,7 +207,7 @@ export default function HomeScreen() {
 
       <View style={{ height: insets.bottom + 32 }} />
 
-      {/* ===== MAP MODAL ===== */}
+      {/* MAP MODAL */}
       <Modal visible={showMapModal} transparent animationType="fade">
         <View style={styles.mapModalOverlay}>
           <Pressable style={[styles.mapModalClose, { top: insets.top + 12 }]} onPress={() => setShowMapModal(false)}>
@@ -224,8 +224,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1A1A2E' },
-
-  // Hero
   heroSection: { minHeight: height * 0.78, position: 'relative', justifyContent: 'center', alignItems: 'center' },
   heroBackground: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
   heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(20,20,40,0.55)' },
@@ -243,20 +241,14 @@ const styles = StyleSheet.create({
   statNumber: { fontSize: 22, fontWeight: '800', color: '#fff' },
   statLabel: { fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
   statDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#D4A017' },
-
-  // Icon Menu
-  menuSection: { backgroundColor: Colors.background, paddingTop: 24, paddingBottom: 8, paddingHorizontal: 12, borderTopLeftRadius: 24, borderTopRightRadius: 24, marginTop: -20 },
-  iconRow: { flexDirection: 'row', justifyContent: 'space-around' },
-  iconItem: { alignItems: 'center', width: 64 },
+  menuSection: { backgroundColor: Colors.background, paddingTop: 24, paddingBottom: 16, paddingHorizontal: 12, borderTopLeftRadius: 24, borderTopRightRadius: 24, marginTop: -20 },
+  iconRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', rowGap: 16 },
+  iconItem: { alignItems: 'center', width: '20%', paddingVertical: 4 },
   iconCircle: { width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
   iconLabel: { fontSize: 11, fontWeight: '600', color: Colors.text.secondary, textAlign: 'center' },
-
-  // Sections
   section: { backgroundColor: Colors.background, paddingHorizontal: 16, paddingTop: 16 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: Colors.text.primary },
-
-  // Castle Map
   mapThumb: { height: 160, borderRadius: 14, overflow: 'hidden', position: 'relative', backgroundColor: '#F0F0F0' },
   mapImage: { width: '100%', height: '100%' },
   mapOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.5)', paddingVertical: 8 },
@@ -264,20 +256,14 @@ const styles = StyleSheet.create({
   mapPlaceholder: { height: 120, borderRadius: 14, backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed' },
   mapPlaceholderText: { fontSize: 14, color: Colors.text.light, marginTop: 6 },
   mapPlaceholderSub: { fontSize: 12, color: Colors.text.light, marginTop: 2 },
-
-  // Map Modal
   mapModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center', alignItems: 'center' },
   mapModalClose: { position: 'absolute', right: 16, zIndex: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
   mapModalImage: { width: width - 24, height: height * 0.7 },
-
-  // Levoča
   levocaCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 14, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
   levocaIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFF8E1', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   levocaInfo: { flex: 1, marginRight: 8 },
   levocaName: { fontSize: 15, fontWeight: '700', color: Colors.text.primary },
   levocaDesc: { fontSize: 12, color: Colors.text.light, marginTop: 2 },
-
-  // Hours
   hoursCard: { backgroundColor: Colors.white, borderRadius: 14, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
   hoursRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   hoursLabel: { flex: 1, fontSize: 13, color: Colors.text.secondary },

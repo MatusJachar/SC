@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head><title>Audio Upload Tool</title></head>
+<body>
+<h2>Upload Stop 10-13 Audio Files</h2>
+<p>Token: <input id="tok" style="width:500px" value=""></p>
+<input type="file" id="files" multiple accept=".mp3">
+<br><br>
+<button onclick="upload()">Upload Selected Files</button>
+<div id="log" style="font-family:monospace;margin-top:20px"></div>
+
+<script>
+const BASE = 'http://nrjrc2wkj5nf2s5rmgxngesn.178.104.72.151.sslip.io/api';
+
+async function getToken() {
+  const r = await fetch(BASE + '/admin/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username: 'hradmin', password: 'hrad2024'})
+  });
+  const j = await r.json();
+  document.getElementById('tok').value = j.access_token || '';
+  log('Token: ' + (j.access_token ? 'OK' : 'FAIL - ' + JSON.stringify(j)));
+}
+
+function log(msg) {
+  document.getElementById('log').innerHTML += msg + '<br>';
+}
+
+async function upload() {
+  const token = document.getElementById('tok').value;
+  const files = document.getElementById('files').files;
+  if (!files.length) { alert('Select files first!'); return; }
+  
+  let ok=0, fail=0;
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    
+    try {
+      const r = await fetch(BASE + '/admin/upload/audio', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: fd
+      });
+      if (r.ok) {
+        log('✅ ' + file.name + ' (' + Math.round(file.size/1024) + 'KB)');
+        ok++;
+      } else {
+        const t = await r.text();
+        log('❌ ' + file.name + ': ' + r.status + ' ' + t.slice(0,60));
+        fail++;
+      }
+    } catch(e) {
+      log('💥 ' + file.name + ': ' + e);
+      fail++;
+    }
+  }
+  log('=== DONE: OK=' + ok + ' FAIL=' + fail + ' ===');
+}
+
+// Auto-login on load
+getToken();
+</script>
+</body>
+</html>
