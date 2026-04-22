@@ -105,9 +105,9 @@ class LanguageCreate(BaseModel):
 
 class TourStopTranslation(BaseModel):
     language_code: str
-    title: str
+    title: str = ""
     short_description: str = ""
-    description: str
+    description: str = ""
     audio_url: Optional[str] = None
     video_url: Optional[str] = None
     vr_url: Optional[str] = None
