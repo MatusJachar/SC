@@ -8,7 +8,9 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:preview": "cmd /c \"rmdir /s /q node_modules\" & npm install & eas build --platform android --profile preview",
+    "clean": "cmd /c \"rmdir /s /q node_modules\""
   },
   "dependencies": {
     "@babel/runtime": "^7.20.6",
