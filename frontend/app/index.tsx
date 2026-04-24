@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Image, Dimensions, ActivityIndicator, ScrollView, Linking, Platform, Modal } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Image, Dimensions, ActivityIndicator, ScrollView, Linking, Platform, Modal, PanResponder, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
@@ -19,8 +19,25 @@ export default function HomeScreen() {
   const [mapUrl, setMapUrl] = useState<string | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
   const [mapRotation, setMapRotation] = useState(0);
+  const [mapScale, setMapScale] = useState(1);
+  const mapScaleAnim = useRef(new Animated.Value(1)).current;
 
   const rotateMap = () => setMapRotation(r => (r + 90) % 360);
+  const zoomIn = () => {
+    const next = Math.min(mapScale + 0.5, 4);
+    setMapScale(next);
+    Animated.spring(mapScaleAnim, { toValue: next, useNativeDriver: true }).start();
+  };
+  const zoomOut = () => {
+    const next = Math.max(mapScale - 0.5, 1);
+    setMapScale(next);
+    Animated.spring(mapScaleAnim, { toValue: next, useNativeDriver: true }).start();
+  };
+  const resetMap = () => {
+    setMapScale(1);
+    setMapRotation(0);
+    Animated.spring(mapScaleAnim, { toValue: 1, useNativeDriver: true }).start();
+  };
 
   useEffect(() => {
     loadData();
@@ -192,24 +209,49 @@ export default function HomeScreen() {
       {/* MAP / PHOTO MODAL */}
       <Modal visible={showMapModal} transparent animationType="fade">
         <View style={styles.mapModalOverlay}>
+          {/* Toolbar */}
           <View style={[styles.mapModalToolbar, { top: insets.top + 12 }]}>
+            <Pressable style={styles.mapModalBtn} onPress={zoomIn}>
+              <Ionicons name="add" size={22} color="#fff" />
+              <Text style={styles.mapModalBtnText}>Zoom+</Text>
+            </Pressable>
+            <Pressable style={styles.mapModalBtn} onPress={zoomOut}>
+              <Ionicons name="remove" size={22} color="#fff" />
+              <Text style={styles.mapModalBtnText}>Zoom-</Text>
+            </Pressable>
             <Pressable style={styles.mapModalBtn} onPress={rotateMap}>
-              <Ionicons name="refresh" size={24} color="#fff" />
+              <Ionicons name="refresh" size={22} color="#fff" />
               <Text style={styles.mapModalBtnText}>Rotate</Text>
             </Pressable>
-            <Pressable style={styles.mapModalBtn} onPress={() => { setShowMapModal(false); setMapRotation(0); }}>
-              <Ionicons name="close" size={24} color="#fff" />
+            <Pressable style={[styles.mapModalBtn, { backgroundColor: 'rgba(255,50,50,0.6)' }]} onPress={() => { setShowMapModal(false); resetMap(); }}>
+              <Ionicons name="close" size={22} color="#fff" />
               <Text style={styles.mapModalBtnText}>Close</Text>
             </Pressable>
           </View>
-          <Image
-            source={{ uri: displayMapUrl }}
-            style={[
-              styles.mapModalImage,
-              { transform: [{ rotate: `${mapRotation}deg` }] }
-            ]}
-            resizeMode={mapUrl ? 'contain' : 'cover'}
-          />
+          {/* Zoomable + Rotatable image */}
+          <ScrollView
+            style={{ flex: 1, width: '100%' }}
+            contentContainerStyle={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+            maximumZoomScale={4}
+            minimumZoomScale={1}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            centerContent
+          >
+            <Animated.Image
+              source={{ uri: displayMapUrl }}
+              style={[
+                styles.mapModalImage,
+                {
+                  transform: [
+                    { rotate: `${mapRotation}deg` },
+                    { scale: mapScaleAnim },
+                  ]
+                }
+              ]}
+              resizeMode="contain"
+            />
+          </ScrollView>
         </View>
       </Modal>
     </ScrollView>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, TextInput, Modal, Image, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, TextInput, Modal, Image, Platform, Dimensions, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -602,6 +602,28 @@ export default function AdminDashboard() {
                 </View>
                 <Text style={styles.qrCodeText}>Code: {qr.qr_code_id}</Text>
                 <Text style={styles.qrTargetText} numberOfLines={1}>Target: {qr.target_url}</Text>
+                <View style={styles.qrActions}>
+                  <Pressable
+                    style={styles.qrActionBtn}
+                    onPress={() => {
+                      const url = getQrImageUrl(qr.qr_code_id);
+                      Linking.openURL(url);
+                    }}
+                  >
+                    <Ionicons name="download" size={18} color={Colors.white} />
+                    <Text style={styles.qrActionText}>Download</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.qrActionBtn, { backgroundColor: '#4CAF50' }]}
+                    onPress={() => {
+                      const url = getQrImageUrl(qr.qr_code_id);
+                      Linking.openURL(url);
+                    }}
+                  >
+                    <Ionicons name="print" size={18} color={Colors.white} />
+                    <Text style={styles.qrActionText}>Print</Text>
+                  </Pressable>
+                </View>
               </View>
             ))}
           </>
@@ -1259,6 +1281,9 @@ const styles = StyleSheet.create({
   qrImage: { width: 180, height: 180 },
   qrCodeText: { fontSize: 14, fontWeight: '700', color: Colors.accent, marginTop: 4, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
   qrTargetText: { fontSize: 11, color: Colors.text.light, marginTop: 4 },
+  qrActions: { flexDirection: 'row', gap: 10, marginTop: 12, width: '100%', justifyContent: 'center' },
+  qrActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.accent, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10 },
+  qrActionText: { fontSize: 14, fontWeight: '700', color: Colors.white },
 
   // Shop Admin
   shopHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
