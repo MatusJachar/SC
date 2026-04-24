@@ -19,25 +19,11 @@ export default function HomeScreen() {
   const [mapUrl, setMapUrl] = useState<string | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
   const [mapRotation, setMapRotation] = useState(0);
-  const [mapScale, setMapScale] = useState(1);
-  const mapScaleAnim = useRef(new Animated.Value(1)).current;
+  
+  
 
   const rotateMap = () => setMapRotation(r => (r + 90) % 360);
-  const zoomIn = () => {
-    const next = Math.min(mapScale + 0.5, 4);
-    setMapScale(next);
-    Animated.spring(mapScaleAnim, { toValue: next, useNativeDriver: true }).start();
-  };
-  const zoomOut = () => {
-    const next = Math.max(mapScale - 0.5, 1);
-    setMapScale(next);
-    Animated.spring(mapScaleAnim, { toValue: next, useNativeDriver: true }).start();
-  };
-  const resetMap = () => {
-    setMapScale(1);
-    setMapRotation(0);
-    Animated.spring(mapScaleAnim, { toValue: 1, useNativeDriver: true }).start();
-  };
+  const resetMap = () => setMapRotation(0);
 
   useEffect(() => {
     loadData();
@@ -211,14 +197,8 @@ export default function HomeScreen() {
         <View style={styles.mapModalOverlay}>
           {/* Toolbar */}
           <View style={[styles.mapModalToolbar, { top: insets.top + 12 }]}>
-            <Pressable style={styles.mapModalBtn} onPress={zoomIn}>
-              <Ionicons name="add" size={22} color="#fff" />
-              <Text style={styles.mapModalBtnText}>Zoom+</Text>
-            </Pressable>
-            <Pressable style={styles.mapModalBtn} onPress={zoomOut}>
-              <Ionicons name="remove" size={22} color="#fff" />
-              <Text style={styles.mapModalBtnText}>Zoom-</Text>
-            </Pressable>
+            
+            
             <Pressable style={styles.mapModalBtn} onPress={rotateMap}>
               <Ionicons name="refresh" size={22} color="#fff" />
               <Text style={styles.mapModalBtnText}>Rotate</Text>
@@ -229,7 +209,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
           {/* Zoomable + Rotatable image */}
-          <Animated.Image source={{ uri: displayMapUrl }} style={[styles.mapModalImage, { transform: [{ rotate: `${mapRotation}deg` }, { scale: mapScaleAnim }] }]} resizeMode="contain" />
+          <Image source={{ uri: displayMapUrl }} style={[styles.mapModalImage, { transform: [{ rotate: `${mapRotation}deg` }, ] }]} resizeMode="contain" />
           </View>
         </Modal>
     </ScrollView>
