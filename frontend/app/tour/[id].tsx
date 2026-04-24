@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, ActivityIndicator } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, ActivityIndicator, Modal, Linking } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../context/AppContext';
@@ -106,6 +106,8 @@ export default function TourDetailScreen() {
   const hasAudio = !!translation?.audio_url;
   const highlights = HIGHLIGHTS[stop?.stop_number || 0];
   const highlightList = highlights ? (selectedLanguage === 'sk' ? highlights.sk : highlights.en) : [];
+  const [showReview, setShowReview] = useState(false);
+  const [rating, setRating] = useState(0);
 
   const formatTime = (ms: number) => {
     const totalSec = Math.floor(ms / 1000);
@@ -131,6 +133,11 @@ export default function TourDetailScreen() {
     if (!nextStop) return;
     await stopAudio();
     router.replace(`/tour/${nextStop.id}`);
+  };
+
+  const handleTourComplete = async () => {
+    await stopAudio();
+    setShowReview(true);
   };
 
   if (!stop) {
@@ -248,14 +255,14 @@ export default function TourDetailScreen() {
           {isLastStop && (
             <Pressable
               style={({ pressed }) => [styles.nextStopButton, { backgroundColor: '#F0F8F0' }, pressed && { opacity: 0.8 }]}
-              onPress={() => router.back()}
+              onPress={handleTourComplete}
             >
               <View style={styles.nextStopContent}>
                 <View style={styles.nextStopTextContainer}>
-                  <Text style={[styles.nextStopLabel, { color: '#4CAF50' }]}>Tour Complete!</Text>
-                  <Text style={[styles.nextStopTitle, { color: '#4CAF50' }]}>Back to tour list</Text>
+                  <Text style={[styles.nextStopLabel, { color: '#4CAF50' }]}>Tour Complete! 🎉</Text>
+                  <Text style={[styles.nextStopTitle, { color: '#4CAF50' }]}>Rate your experience</Text>
                 </View>
-                <Ionicons name="checkmark-circle" size={28} color="#4CAF50" />
+                <Ionicons name="star" size={28} color="#4CAF50" />
               </View>
             </Pressable>
           )}
@@ -287,6 +294,65 @@ export default function TourDetailScreen() {
           )}
         </View>
       )}
+
+      {/* ===== REVIEW MODAL ===== */}
+      <Modal visible={showReview} transparent animationType="fade">
+        <View style={styles.reviewOverlay}>
+          <View style={styles.reviewCard}>
+            {/* Castle icon */}
+            <Text style={styles.reviewEmoji}>🏰</Text>
+            <Text style={styles.reviewTitle}>Ako sa vám páčil sprievod?</Text>
+            <Text style={styles.reviewSubtitle}>How was your experience?</Text>
+
+            {/* Stars */}
+            <View style={styles.starsRow}>
+              {[1,2,3,4,5].map(star => (
+                <Pressable key={star} onPress={() => setRating(star)} style={styles.starBtn}>
+                  <Ionicons
+                    name={star <= rating ? 'star' : 'star-outline'}
+                    size={40}
+                    color={star <= rating ? '#FFD700' : '#CCC'}
+                  />
+                </Pressable>
+              ))}
+            </View>
+
+            {rating > 0 && (
+              <Text style={styles.ratingText}>
+                {rating === 5 ? '🎉 Skúsiné!' : rating === 4 ? '😊 Veľmi dobre!' : rating === 3 ? '🙂 Dobre' : rating === 2 ? '😐 Už lepšie' : '🙁 Ospravedlňujeme sa'}
+              </Text>
+            )}
+
+            {/* Action buttons */}
+            <View style={styles.reviewActions}>
+              {rating >= 4 && (
+                <Pressable
+                  style={styles.reviewBtnPrimary}
+                  onPress={() => {
+                    Linking.openURL('https://play.google.com/store/apps/details?id=com.spiscastle.audioguide');
+                    setShowReview(false);
+                    router.replace('/');
+                  }}
+                >
+                  <Ionicons name="star" size={18} color="#fff" />
+                  <Text style={styles.reviewBtnPrimaryText}>Ohodnōte nás na Google Play</Text>
+                </Pressable>
+              )}
+              <Pressable
+                style={styles.reviewBtnSecondary}
+                onPress={() => {
+                  setShowReview(false);
+                  router.replace('/');
+                }}
+              >
+                <Text style={styles.reviewBtnSecondaryText}>
+                  {rating > 0 ? 'Pokračovat' : 'Preskočiť'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -341,6 +407,21 @@ const styles = StyleSheet.create({
   // No audio
   noAudioRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10 },
   noAudioText: { fontSize: 13, color: Colors.text.light },
+
+  // Review Modal
+  reviewOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  reviewCard: { backgroundColor: '#fff', borderRadius: 24, padding: 28, width: '100%', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
+  reviewEmoji: { fontSize: 52, marginBottom: 12 },
+  reviewTitle: { fontSize: 20, fontWeight: '800', color: Colors.text.primary, textAlign: 'center', marginBottom: 4 },
+  reviewSubtitle: { fontSize: 14, color: Colors.text.light, textAlign: 'center', marginBottom: 20 },
+  starsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  starBtn: { padding: 4 },
+  ratingText: { fontSize: 16, fontWeight: '700', color: Colors.accent, marginBottom: 20 },
+  reviewActions: { width: '100%', gap: 10, marginTop: 8 },
+  reviewBtnPrimary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.accent, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 20 },
+  reviewBtnPrimaryText: { fontSize: 15, fontWeight: '800', color: '#fff' },
+  reviewBtnSecondary: { alignItems: 'center', paddingVertical: 12 },
+  reviewBtnSecondaryText: { fontSize: 14, color: Colors.text.light, fontWeight: '600' },
 
   // Highlights
   highlightsContainer: { marginTop: 20, backgroundColor: '#FFF8E7', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#F0E0B0' },
