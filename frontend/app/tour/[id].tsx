@@ -9,6 +9,45 @@ import { API_BASE_URL, getFullUrl } from '../../constants/api';
 
 const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
 
+// Key highlights pre každú zastávku (SK + EN)
+const HIGHLIGHTS: Record<number, { sk: string[]; en: string[] }> = {
+  1:  { sk: ['634 m nad morom', 'Plocha 4 hektáre', 'UNESCO od roku 1993', '9 storočí histórie'],
+        en: ['634 m above sea level', 'Area of 4 hectares', 'UNESCO since 1993', '9 centuries of history'] },
+  2:  { sk: ['Osídlený od neolitu', 'Keltské osídlenie', 'Prvá písomná zmienka 1249', 'Dynastia Árpádovcov'],
+        en: ['Inhabited since Neolithic', 'Celtic settlement', 'First written record 1249', 'Árpád dynasty'] },
+  3:  { sk: ['Model má 132 izieb', 'Autor: Adolph Stephanie', 'Požiar roku 1870', 'Národná pamiatka od 1961'],
+        en: ['Model has 132 rooms', 'Author: Adolph Stephanie', 'Fire in 1870', 'National monument since 1961'] },
+  4:  { sk: ['Hydina, hovädzie, zverina', 'Údenie, solenie, sušenie', 'Recept z 16. storočia', 'Počas pandémií: víno a pivo'],
+        en: ['Poultry, beef, game', 'Smoking, salting, drying', 'Recipe from 16th century', 'During pandemics: wine & beer'] },
+  5:  { sk: ['UNESCO od roku 1993', 'Kostolík sv. Ducha v Žehre', 'Levoča pridaná roku 2009', 'Oltár Majstra Pavla v Levoči'],
+        en: ['UNESCO since 1993', 'Church of Holy Spirit in Žehra', 'Levoča added in 2009', 'Altar of Master Pavol'] },
+  6:  { sk: ['Tatársky vpád roku 1241', 'Hrad dobytý nebol', 'Románska brána – najstaršia', 'Zápoľský rod – neskorá gotika'],
+        en: ['Tatar invasion 1241', 'Castle was never conquered', 'Romanesque gate – oldest', 'Zápoľský family – late Gothic'] },
+  7:  { sk: ['Výška 634 m n.m.', 'Vidieť Vysoké aj Nízke Tatry', 'Dve stredoveké obchodné cesty', 'Spišská Kapitula v dohľade'],
+        en: ['Altitude 634 m', 'View of High & Low Tatras', 'Two medieval trade routes', 'Spišská Kapitula visible'] },
+  8:  { sk: ['Postavené v 15. storočí', 'Ján Jiskra z Brandýsa', 'Múry 7-9 m vysoké', 'Keltská svätyňa v rohu'],
+        en: ['Built in 15th century', 'Jan Jiskra of Brandys', 'Walls 7-9 m high', 'Celtic sanctuary in corner'] },
+  9:  { sk: ['Legálna súdna metóda', 'Väzeň priznal z pohľadu na nástroje', 'Tmavá studená pivnica', '10 druhov mučiacich nástrojov'],
+        en: ['Legal judicial method', 'Prisoner confessed from sight of tools', 'Dark cold dungeon', '10 types of torture instruments'] },
+  10: { sk: ['Druhá románska brána', 'Zápoľský palác – renesancia', 'Prvá veža: Ø 4 m, výška 23 m', 'Padla pre tektonické posuny'],
+        en: ['Second Romanesque gate', 'Zápoľský palace – Renaissance', 'First tower: Ø 4 m, height 23 m', 'Fell due to tectonic shifts'] },
+  11: { sk: ['Výška veže 19 metrov', 'Postavil vojvoda Koloman', '5 poschodí + suterén', 'Jediný zdroj vody: cisterna'],
+        en: ['Tower height 19 meters', 'Built by Duke Koloman', '5 floors + basement', 'Only water source: cistern'] },
+  12: { sk: ['1 zo 4 románskych palácov na svete', 'Ďalší je v Merane (Taliansko)', 'Kaplnka sv. Alžbety Uhorskej', '7 románskych okien'],
+        en: ['1 of 4 Romanesque palaces in world', 'Another one in Merano (Italy)', 'Chapel of St. Elizabeth', '7 Romanesque windows'] },
+  13: { sk: ['Najvyšší bod hradu', 'Výhľad na celé Slovensko', 'Tu sa začal príbeh hradu', '850+ rokov existencie'],
+        en: ['Highest point of castle', 'View across all of Slovakia', 'Where the castle story began', '850+ years of existence'] },
+  // Legendy
+  101:{ sk: ['Odvážny mních', 'Zakázaná láska', 'Hradné múry ako svedkovia', 'Legenda žije dodnes'],
+        en: ['Brave monk', 'Forbidden love', 'Castle walls as witnesses', 'Legend lives on today'] },
+  102:{ sk: ['Mních Roland', 'Záchrana hradu', 'Statočnosť a viera', 'Historická legenda'],
+        en: ['Monk Roland', 'Saving the castle', 'Courage and faith', 'Historical legend'] },
+  103:{ sk: ['Duch Spišského hradu', 'Skryté poklady Zápoľskovcov', 'Záhadné zjavenia', 'Tajomstvo hradných pivníc'],
+        en: ['Ghost of Spis Castle', 'Hidden Zápoľský treasures', 'Mysterious apparitions', 'Secret of castle cellars'] },
+  104:{ sk: ['Cigánska princezná', 'Putovanie a osud', 'Romantická legenda', 'Mágia a predsudky'],
+        en: ['Gypsy princess', 'Wandering and fate', 'Romantic legend', 'Magic and prejudice'] },
+};
+
 export default function TourDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -65,6 +104,8 @@ export default function TourDetailScreen() {
 
   const isCurrentStop = currentStopId === id;
   const hasAudio = !!translation?.audio_url;
+  const highlights = HIGHLIGHTS[stop?.stop_number || 0];
+  const highlightList = highlights ? (selectedLanguage === 'sk' ? highlights.sk : highlights.en) : [];
 
   const formatTime = (ms: number) => {
     const totalSec = Math.floor(ms / 1000);
@@ -142,6 +183,18 @@ export default function TourDetailScreen() {
         showsVerticalScrollIndicator={true}
       >
         <Text style={styles.description}>{translation?.description || ''}</Text>
+
+        {highlightList.length > 0 && (
+          <View style={styles.highlightsContainer}>
+            <Text style={styles.highlightsTitle}>🏰 Highlights</Text>
+            {highlightList.map((item, i) => (
+              <View key={i} style={styles.highlightRow}>
+                <View style={styles.highlightDot} />
+                <Text style={styles.highlightText}>{item}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       {/* Audio Player */}
@@ -288,4 +341,11 @@ const styles = StyleSheet.create({
   // No audio
   noAudioRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10 },
   noAudioText: { fontSize: 13, color: Colors.text.light },
+
+  // Highlights
+  highlightsContainer: { marginTop: 20, backgroundColor: '#FFF8E7', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#F0E0B0' },
+  highlightsTitle: { fontSize: 13, fontWeight: '800', color: Colors.accent, marginBottom: 10, letterSpacing: 0.5 },
+  highlightRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 7 },
+  highlightDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.accent, marginRight: 10 },
+  highlightText: { fontSize: 14, color: Colors.text.primary, fontWeight: '500', flex: 1 },
 });

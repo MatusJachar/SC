@@ -19,19 +19,19 @@ const TOUR_DEFS: Record<string, { stops: number[]; legends: number[] }> = {
 };
 
 const STOP_ICONS: Record<number, { icon: string; bg: string }> = {
-  1:  { icon: 'flag',        bg: '#D4A017' },
-  2:  { icon: 'camera',      bg: '#D4A017' },
-  3:  { icon: 'cube',        bg: '#D4A017' },
-  4:  { icon: 'restaurant',  bg: '#D4A017' },
-  5:  { icon: 'layers',      bg: '#D4A017' },
-  6:  { icon: 'git-branch',  bg: '#D4A017' },
-  7:  { icon: 'trending-up', bg: '#D4A017' },
-  8:  { icon: 'grid',        bg: '#D4A017' },
-  9:  { icon: 'skull',       bg: '#D4A017' },
-  10: { icon: 'home',        bg: '#D4A017' },
-  11: { icon: 'telescope',   bg: '#D4A017' },
-  12: { icon: 'business',    bg: '#D4A017' },
-  13: { icon: 'eye',         bg: '#D4A017' },
+  1:  { icon: 'flag',         bg: '#D4A017' },  // Vstup / Vitajte
+  2:  { icon: 'camera',       bg: '#D4A017' },  // Fotografia hradu
+  3:  { icon: 'map',          bg: '#D4A017' },  // Model hradu
+  4:  { icon: 'restaurant',   bg: '#D4A017' },  // Kuchyňa
+  5:  { icon: 'earth',        bg: '#D4A017' },  // UNESCO / Terasa
+  6:  { icon: 'shield',       bg: '#D4A017' },  // Románske predhradie / Obrana
+  7:  { icon: 'telescope',    bg: '#D4A017' },  // Horná terasa / Panoráma
+  8:  { icon: 'people',       bg: '#D4A017' },  // Dolné nádvorie
+  9:  { icon: 'skull',        bg: '#D4A017' },  // Mučiareň
+  10: { icon: 'library',      bg: '#D4A017' },  // Zápoľský palác
+  11: { icon: 'watch',        bg: '#D4A017' },  // Veža Nebojsa
+  12: { icon: 'medal',        bg: '#D4A017' },  // Románsky palác - unikát
+  13: { icon: 'sunny',        bg: '#D4A017' },  // Výhľad z akropoly
 };
 
 export default function TourScreen() {
@@ -125,7 +125,7 @@ export default function TourScreen() {
                 <Text style={styles.stopDesc} numberOfLines={2}>{trans.short_description}</Text>
               </View>
               <View style={styles.playIcon}>
-                <Ionicons name="play" size={16} color="#D4A017" />
+                <Ionicons name="chevron-forward" size={18} color="#D4A017" />
               </View>
             </Pressable>
           );

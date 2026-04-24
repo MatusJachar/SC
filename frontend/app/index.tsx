@@ -10,6 +10,7 @@ import axios from 'axios';
 
 const { width, height } = Dimensions.get('window');
 const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
+const FALLBACK_CASTLE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Spis_Castle_from_road_01.jpg/1280px-Spis_Castle_from_road_01.jpg';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -17,6 +18,9 @@ export default function HomeScreen() {
   const { loadData, isLoading, tourStops, legends, languages } = useApp();
   const [mapUrl, setMapUrl] = useState<string | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [mapRotation, setMapRotation] = useState(0);
+
+  const rotateMap = () => setMapRotation(r => (r + 90) % 360);
 
   useEffect(() => {
     loadData();
@@ -37,6 +41,8 @@ export default function HomeScreen() {
       </View>
     );
   }
+
+  const displayMapUrl = mapUrl ? getFullUrl(mapUrl) : FALLBACK_CASTLE_IMAGE;
 
   return (
     <ScrollView style={styles.container} bounces={false} showsVerticalScrollIndicator={false}>
@@ -61,24 +67,24 @@ export default function HomeScreen() {
           </Pressable>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{languages.length}</Text>
+              <Text style={styles.statNumber}>{languages.length || 9}</Text>
               <Text style={styles.statLabel}>Languages</Text>
             </View>
             <View style={styles.statDot} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{tourStops.length}</Text>
+              <Text style={styles.statNumber}>{tourStops.length || 13}</Text>
               <Text style={styles.statLabel}>Stops</Text>
             </View>
             <View style={styles.statDot} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{legends.length}</Text>
+              <Text style={styles.statNumber}>{legends.length || 4}</Text>
               <Text style={styles.statLabel}>Legends</Text>
             </View>
           </View>
         </View>
       </View>
 
-      {/* ICON MENU — 5 per row, 6th wraps to 2nd row */}
+      {/* ICON MENU */}
       <View style={styles.menuSection}>
         <View style={styles.iconRow}>
           <Pressable style={styles.iconItem} onPress={() => router.push('/features/info')}>
@@ -105,58 +111,34 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.iconLabel}>Transport</Text>
           </Pressable>
-          {/* VR — schované, bude aktivované keď budú správne videá
-          <Pressable style={styles.iconItem} onPress={() => router.push('/features/vr')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#7C4DFF' }]}>
-              <Ionicons name="glasses" size={24} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>VR</Text>
-          </Pressable>
-          */}
           <Pressable style={styles.iconItem} onPress={() => router.push('/admin')}>
             <View style={[styles.iconCircle, { backgroundColor: '#9C27B0' }]}>
               <Ionicons name="settings" size={24} color="#fff" />
             </View>
             <Text style={styles.iconLabel}>Admin</Text>
           </Pressable>
-          {/* Shop — odkomentovať za ~2 mesiace */}
-          {/* <Pressable style={styles.iconItem} onPress={() => router.push('/features/shop')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#FF9800' }]}>
-              <Ionicons name="bag" size={24} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>Shop</Text>
-          </Pressable> */}
-          {/* Support — odkomentovať keď bude pripravené */}
-          {/* <Pressable style={styles.iconItem} onPress={() => router.push('/features/support')}>
-            <View style={[styles.iconCircle, { backgroundColor: '#F44336' }]}>
-              <Ionicons name="heart" size={24} color="#fff" />
-            </View>
-            <Text style={styles.iconLabel}>Support</Text>
-          </Pressable> */}
         </View>
       </View>
 
-      {/* CASTLE MAP */}
+      {/* CASTLE MAP / PHOTO */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Ionicons name="map" size={20} color="#D4A017" />
-          <Text style={styles.sectionTitle}>Castle Map</Text>
+          <Text style={styles.sectionTitle}>{mapUrl ? 'Castle Map' : 'Spi\u0161 Castle'}</Text>
         </View>
-        {mapUrl ? (
-          <Pressable onPress={() => setShowMapModal(true)} style={styles.mapThumb}>
-            <Image source={{ uri: getFullUrl(mapUrl) }} style={styles.mapImage} resizeMode="contain" />
-            <View style={styles.mapOverlay}>
-              <Ionicons name="expand" size={22} color="#fff" />
-              <Text style={styles.mapOverlayText}>Tap to enlarge</Text>
-            </View>
-          </Pressable>
-        ) : (
-          <View style={styles.mapPlaceholder}>
-            <Ionicons name="image-outline" size={36} color={Colors.text.light} />
-            <Text style={styles.mapPlaceholderText}>Castle map coming soon</Text>
-            <Text style={styles.mapPlaceholderSub}>Upload via Admin {'\u2192'} Settings</Text>
+        <Pressable onPress={() => setShowMapModal(true)} style={styles.mapThumb}>
+          <Image
+            source={{ uri: displayMapUrl }}
+            style={styles.mapImage}
+            resizeMode={mapUrl ? 'contain' : 'cover'}
+          />
+          <View style={styles.mapOverlay}>
+            <Ionicons name="expand" size={22} color="#fff" />
+            <Text style={styles.mapOverlayText}>
+              {mapUrl ? 'Tap to enlarge' : 'Tap to view'}
+            </Text>
           </View>
-        )}
+        </Pressable>
       </View>
 
       {/* NEARBY */}
@@ -207,15 +189,27 @@ export default function HomeScreen() {
 
       <View style={{ height: insets.bottom + 32 }} />
 
-      {/* MAP MODAL */}
+      {/* MAP / PHOTO MODAL */}
       <Modal visible={showMapModal} transparent animationType="fade">
         <View style={styles.mapModalOverlay}>
-          <Pressable style={[styles.mapModalClose, { top: insets.top + 12 }]} onPress={() => setShowMapModal(false)}>
-            <Ionicons name="close" size={28} color="#fff" />
-          </Pressable>
-          {mapUrl && (
-            <Image source={{ uri: getFullUrl(mapUrl) }} style={styles.mapModalImage} resizeMode="contain" />
-          )}
+          <View style={[styles.mapModalToolbar, { top: insets.top + 12 }]}>
+            <Pressable style={styles.mapModalBtn} onPress={rotateMap}>
+              <Ionicons name="refresh" size={24} color="#fff" />
+              <Text style={styles.mapModalBtnText}>Rotate</Text>
+            </Pressable>
+            <Pressable style={styles.mapModalBtn} onPress={() => { setShowMapModal(false); setMapRotation(0); }}>
+              <Ionicons name="close" size={24} color="#fff" />
+              <Text style={styles.mapModalBtnText}>Close</Text>
+            </Pressable>
+          </View>
+          <Image
+            source={{ uri: displayMapUrl }}
+            style={[
+              styles.mapModalImage,
+              { transform: [{ rotate: `${mapRotation}deg` }] }
+            ]}
+            resizeMode={mapUrl ? 'contain' : 'cover'}
+          />
         </View>
       </Modal>
     </ScrollView>
@@ -249,16 +243,15 @@ const styles = StyleSheet.create({
   section: { backgroundColor: Colors.background, paddingHorizontal: 16, paddingTop: 16 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: Colors.text.primary },
-  mapThumb: { height: 160, borderRadius: 14, overflow: 'hidden', position: 'relative', backgroundColor: '#F0F0F0' },
+  mapThumb: { height: 180, borderRadius: 14, overflow: 'hidden', position: 'relative', backgroundColor: '#E0E0E0' },
   mapImage: { width: '100%', height: '100%' },
   mapOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.5)', paddingVertical: 8 },
   mapOverlayText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  mapPlaceholder: { height: 120, borderRadius: 14, backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0', borderStyle: 'dashed' },
-  mapPlaceholderText: { fontSize: 14, color: Colors.text.light, marginTop: 6 },
-  mapPlaceholderSub: { fontSize: 12, color: Colors.text.light, marginTop: 2 },
   mapModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'center', alignItems: 'center' },
-  mapModalClose: { position: 'absolute', right: 16, zIndex: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
-  mapModalImage: { width: width - 24, height: height * 0.7 },
+  mapModalToolbar: { position: 'absolute', right: 16, zIndex: 10, flexDirection: 'row', gap: 12 },
+  mapModalBtn: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, gap: 2 },
+  mapModalBtnText: { color: '#fff', fontSize: 11, fontWeight: '600' },
+  mapModalImage: { width: width - 24, height: height * 0.75 },
   levocaCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 14, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
   levocaIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFF8E1', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   levocaInfo: { flex: 1, marginRight: 8 },
