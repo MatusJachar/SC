@@ -1795,6 +1795,56 @@ async def download_export():
         )
     return {"error": "Export file not found. Please generate it first."}
 
+
+# ==================== STRIPE PAYMENTS ====================
+import stripe
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+PRICES = {
+    "audio": "price_1TPnIyFMbg1KBMgPYEw17xf1",
+    "vr": "price_1TPnK5FMbg1KBMgPwlKgv5Nz",
+}
+
+@api_router.post("/payment/create-checkout")
+async def create_checkout(request: Request):
+    body = await request.json()
+    product_type = body.get("type", "audio")
+    price_id = PRICES.get(product_type, PRICES["audio"])
+    session = stripe.checkout.Session.create(
+        payment_method_types=["card"],
+        line_items=[{"price": price_id, "quantity": 1}],
+        mode="payment",
+        success_url="http://178.104.72.151:8002/api/payment/success?session_id={CHECKOUT_SESSION_ID}&type=" + product_type,
+        cancel_url="http://178.104.72.151:8002/api/payment/cancel",
+    )
+    return {"url": session.url}
+
+@api_router.get("/payment/success")
+async def payment_success(session_id: str, type: str = "audio"):
+    session = stripe.checkout.Session.retrieve(session_id)
+    if session.payment_status == "paid":
+        import random, string
+        code = "CASTLE-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        return FileResponse(None) if False else Response(content=f"""
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spiš Castle - Payment Success</title>
+<style>
+  body{{font-family:system-ui,sans-serif;background:#1a1a2e;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box;}}
+  .card{{background:rgba(255,255,255,0.08);border-radius:24px;padding:40px;max-width:400px;width:100%;text-align:center;border:1px solid rgba(255,255,255,0.15);}}
+  .castle{{font-size:60px;margin-bottom:16px;}}
+  h1{{color:#FFD700;font-size:24px;margin:0 0 8px;}}
+  p{{color:#ccc;margin:0 0 24px;font-size:15px;}}
+  .code{{background:rgba(255,215,0,0.15);border:2px solid #FFD700;border-radius:16px;padding:20px;margin:24px 0;}}
+  .code-label{{font-size:12px;color:#FFD700;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;}}
+  .code-value{{font-size:32px;font-weight:800;color:#FFD700;letter-spacing:4px;}}
+  .note{{font-size:13px;color:#aaa;margin-top:24px;}}
+</style></head><body>
+<div class="card">
+  <div class="castle">??</div>
+  <h1>Payment Successful!</h1>
+  <p>Thank you for purchasing {'Full VR Experience' if type == 'vr' else 'Full Audio Tour'}</p>
+
 # Include the router
 app.include_router(api_router)
 
@@ -1813,3 +1863,4 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+

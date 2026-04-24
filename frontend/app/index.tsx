@@ -229,32 +229,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
           {/* Zoomable + Rotatable image */}
-          <ScrollView
-            style={{ flex: 1, width: '100%' }}
-            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', minHeight: '100%' }}
-            maximumZoomScale={4}
-            minimumZoomScale={1}
-            showsVerticalScrollIndicator={false}
-            showsHorizontalScrollIndicator={false}
-            centerContent
-          >
-            <Animated.Image
-              source={{ uri: displayMapUrl }}
-              style={[
-                styles.mapModalImage,
-                {
-                  transform: [
-                    { rotate: `${mapRotation}deg` },
-                    { scale: mapScaleAnim },
-                  ]
-                }
-              ]}
-              resizeMode="contain"
-            />
-          </ScrollView>
-        </View>
-      </Modal>
-    </ScrollView>
+          <Animated.Image source={{ uri: displayMapUrl }} style={[styles.mapModalImage, { transform: [{ rotate: `${mapRotation}deg` }, { scale: mapScaleAnim }] }]} resizeMode="contain" />
   );
 }
 
@@ -293,7 +268,7 @@ const styles = StyleSheet.create({
   mapModalToolbar: { position: 'absolute', right: 16, zIndex: 10, flexDirection: 'row', gap: 12 },
   mapModalBtn: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, gap: 2 },
   mapModalBtnText: { color: '#fff', fontSize: 11, fontWeight: '600' },
-  mapModalImage: { width: width - 24, height: height * 0.75 },
+  mapModalImage: { width: width, height: height * 0.85 },
   levocaCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 14, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 },
   levocaIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFF8E1', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   levocaInfo: { flex: 1, marginRight: 8 },
@@ -307,4 +282,6 @@ const styles = StyleSheet.create({
   moreBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, gap: 6 },
   moreBtnText: { fontSize: 13, fontWeight: '600', color: '#D4A017' },
 });
+
+
 
