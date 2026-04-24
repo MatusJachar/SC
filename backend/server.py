@@ -443,25 +443,19 @@ def generate_qr_code(data: str, size: int = 300) -> bytes:
         img = qr.make_image(fill_color="#1A1A2E", back_color="white").convert('RGB')
         img = img.resize((300, 300), Image.LANCZOS)
         
-        # Create golden castle logo in center
-        logo_size = 60
-        logo = Image.new('RGB', (logo_size, logo_size), '#D4A017')
-        draw = ImageDraw.Draw(logo)
-        # Draw simple castle silhouette
-        draw.rectangle([5, 30, 55, 55], fill='#1A1A2E')  # base
-        draw.rectangle([5, 15, 18, 32], fill='#1A1A2E')   # left tower
-        draw.rectangle([41, 15, 55, 32], fill='#1A1A2E')  # right tower
-        draw.rectangle([23, 20, 37, 32], fill='#1A1A2E')  # center tower
-        # Battlements
-        for x in [5, 11, 41, 47]:
-            draw.rectangle([x, 10, x+4, 17], fill='#1A1A2E')
-        draw.rectangle([23, 13, 27, 20], fill='#1A1A2E')
-        draw.rectangle([32, 13, 36, 20], fill='#1A1A2E')
-        # Round logo corners
-        mask = Image.new('L', (logo_size, logo_size), 0)
-        mask_draw = ImageDraw.Draw(mask)
-        mask_draw.rounded_rectangle([0, 0, logo_size-1, logo_size-1], radius=10, fill=255)
-        logo.putalpha(mask)
+        # Load real castle logo if available
+        logo_path = ROOT_DIR / 'uploads' / 'images' / 'castle_logo.png'
+        if logo_path.exists():
+            logo = Image.open(str(logo_path)).convert('RGBA')
+        else:
+            # Fallback: draw simple castle
+            logo = Image.new('RGBA', (logo_size, logo_size), '#D4A017')
+            draw = ImageDraw.Draw(logo)
+            draw.rectangle([5, 30, 55, 55], fill='#1A1A2E')
+            draw.rectangle([5, 15, 18, 32], fill='#1A1A2E')
+            draw.rectangle([41, 15, 55, 32], fill='#1A1A2E')
+            draw.rectangle([23, 20, 37, 32], fill='#1A1A2E')
+        logo = logo.resize((logo_size, logo_size), Image.LANCZOS)
         
         # Paste logo in center
         pos = ((img.width - logo_size) // 2, (img.height - logo_size) // 2)

@@ -147,7 +147,7 @@ export default function HomeScreen() {
           <Image
             source={{ uri: displayMapUrl }}
             style={styles.mapImage}
-            resizeMode={mapUrl ? 'contain' : 'cover'}
+            resizeMode="contain"
           />
           <View style={styles.mapOverlay}>
             <Ionicons name="expand" size={22} color="#fff" />
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   section: { backgroundColor: Colors.background, paddingHorizontal: 16, paddingTop: 16 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: Colors.text.primary },
-  mapThumb: { height: 180, borderRadius: 14, overflow: 'hidden', position: 'relative', backgroundColor: '#E0E0E0' },
+  mapThumb: { height: 200, borderRadius: 14, overflow: 'hidden', position: 'relative', backgroundColor: '#E0E0E0' },
   mapImage: { width: '100%', height: '100%' },
   mapOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.5)', paddingVertical: 8 },
   mapOverlayText: { color: '#fff', fontSize: 13, fontWeight: '600' },
