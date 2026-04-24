@@ -231,7 +231,7 @@ export default function HomeScreen() {
           {/* Zoomable + Rotatable image */}
           <ScrollView
             style={{ flex: 1, width: '100%' }}
-            contentContainerStyle={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', minHeight: '100%' }}
             maximumZoomScale={4}
             minimumZoomScale={1}
             showsVerticalScrollIndicator={false}
@@ -307,3 +307,4 @@ const styles = StyleSheet.create({
   moreBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, gap: 6 },
   moreBtnText: { fontSize: 13, fontWeight: '600', color: '#D4A017' },
 });
+
