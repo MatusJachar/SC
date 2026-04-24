@@ -230,6 +230,9 @@ export default function HomeScreen() {
           </View>
           {/* Zoomable + Rotatable image */}
           <Animated.Image source={{ uri: displayMapUrl }} style={[styles.mapModalImage, { transform: [{ rotate: `${mapRotation}deg` }, { scale: mapScaleAnim }] }]} resizeMode="contain" />
+          </View>
+        </Modal>
+    </ScrollView>
   );
 }
 
