@@ -47,7 +47,7 @@ export default function VisitorInfoScreen() {
 
   const loadSettings = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/site-settings`);
+      const res = {data: {castle_map_url: 'https://raw.githubusercontent.com/MatusJachar/SC/main/frontend/assets/images/castle_map.png'}};
       if (res.data?.social_links) setSocialLinks(res.data.social_links);
       if (res.data?.castle_map_url) setCastleMapUrl(res.data.castle_map_url);
     } catch {}
