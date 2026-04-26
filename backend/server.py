@@ -1825,25 +1825,12 @@ async def payment_success(session_id: str, type: str = "audio"):
     if session.payment_status == "paid":
         import random, string
         code = "CASTLE-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        return FileResponse(None) if False else Response(content=f"""
-<!DOCTYPE html><html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spiš Castle - Payment Success</title>
-<style>
-  body{{font-family:system-ui,sans-serif;background:#1a1a2e;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box;}}
-  .card{{background:rgba(255,255,255,0.08);border-radius:24px;padding:40px;max-width:400px;width:100%;text-align:center;border:1px solid rgba(255,255,255,0.15);}}
-  .castle{{font-size:60px;margin-bottom:16px;}}
-  h1{{color:#FFD700;font-size:24px;margin:0 0 8px;}}
-  p{{color:#ccc;margin:0 0 24px;font-size:15px;}}
-  .code{{background:rgba(255,215,0,0.15);border:2px solid #FFD700;border-radius:16px;padding:20px;margin:24px 0;}}
-  .code-label{{font-size:12px;color:#FFD700;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;}}
-  .code-value{{font-size:32px;font-weight:800;color:#FFD700;letter-spacing:4px;}}
-  .note{{font-size:13px;color:#aaa;margin-top:24px;}}
-</style></head><body>
-<div class="card">
-  <div class="castle">??</div>
-  <h1>Payment Successful!</h1>
-  <p>Thank you for purchasing {'Full VR Experience' if type == 'vr' else 'Full Audio Tour'}</p>
+        return Response(content=f"<html><body><h1>Code: {code}</h1></body></html>", media_type="text/html")
+    return {"error": "Payment not completed"}
+
+@api_router.get("/payment/cancel")
+async def payment_cancel():
+    return Response(content="<html><body><h1>Cancelled</h1></body></html>", media_type="text/html")
 
 # Include the router
 app.include_router(api_router)
