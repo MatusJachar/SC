@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pymongo[srv]
+motor
+stripe
+python-multipart
+python-jose[cryptography]
+bcrypt
+httpx
+aiofiles
+pydantic
+slowapi
