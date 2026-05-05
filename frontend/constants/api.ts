@@ -1,5 +1,38 @@
 import Constants from 'expo-constants';
 
+// Primary backend - spis-backend (stable, always running)
+const PRIMARY_URL = 'http://5f5cc8cef56f.178.104.72.151.sslip.io';
+
+const getApiBaseUrl = () => {
+  const backendUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL
+    || Constants.expoConfig?.extra?.backendUrl
+    || process.env.EXPO_PUBLIC_BACKEND_URL;
+  if (backendUrl) return backendUrl + '/api';
+  return PRIMARY_URL + '/api';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
+
+export const API_ENDPOINTS = {
+  health: '/health',
+  languages: '/languages',
+  tourStops: '/tour-stops',
+  tourStop: (id: string) => '/tour-stops/' + id,
+  siteInfo: (language: string) => '/site-info?language=' + language,
+  siteSettings: '/site-settings',
+  offlinePackage: '/offline-package',
+  audioFile: (filename: string) => '/uploads/audio/' + filename,
+};
+
+export const getFullUrl = (path: string): string => {
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/api')) {
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    return baseUrl + path;
+  }
+  return API_BASE_URL + path;
+};import Constants from 'expo-constants';
+
 // Get the backend URL from environment or use a fallback
 const getApiBaseUrl = () => {
   const backendUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL 
