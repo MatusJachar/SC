@@ -45,7 +45,7 @@ const getApiBaseUrl = () => {
   return 'http://localhost:8001/api';
 };
 
-export const API_BASE_URL = 'http://aa5hp9zudiqhoh2kn1rdf4oa.178.104.72.151.sslip.io/api';
+export const API_BASE_URL = 'http://nrjrc2wkj5nf2s5rmgxngesn.178.104.72.151.sslip.io/api';
 export const API_ENDPOINTS = {
   health: '/health',
   languages: '/languages',
