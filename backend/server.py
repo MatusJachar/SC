@@ -45,7 +45,7 @@ def _set_cache(k,d):
 def _valid_uuid(v):
     return bool(_re.match(r'^[0-9a-f-]{36}$',str(v)))
 def _sanitize(v,m=500):
-    return _re.sub(r'[<>&'"%;()]','',str(v))[:m].strip()
+    return _re.sub(r'[<>&%;()]','',str(v))[:m].strip()
 def _rate_ok(ip,lim=60,win=60):
     now=_time.time()
     _rl[ip]=[t for t in _rl.get(ip,[]) if now-t<win]
@@ -1830,7 +1830,7 @@ async def download_export():
 
 
 # ==================== STRIPE PAYMENTS ====================
-# import stripe  # disabled - not installed
+import stripe  # disabled - not installed
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 PRICES = {
