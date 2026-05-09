@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, ActivityIndicator, Modal, Linking } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,42 +9,42 @@ import { API_BASE_URL, getFullUrl } from '../../constants/api';
 
 const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
 
-// Key highlights pre každú zastávku (SK + EN)
+// Key highlights pre kaĹľdĂş zastĂˇvku (SK + EN)
 const HIGHLIGHTS: Record<number, { sk: string[]; en: string[] }> = {
-  1:  { sk: ['634 m nad morom', 'Plocha 4 hektáre', 'UNESCO od roku 1993', '9 storočí histórie'],
+  1:  { sk: ['634 m nad morom', 'Plocha 4 hektĂˇre', 'UNESCO od roku 1993', '9 storoÄŤĂ­ histĂłrie'],
         en: ['634 m above sea level', 'Area of 4 hectares', 'UNESCO since 1993', '9 centuries of history'] },
-  2:  { sk: ['Osídlený od neolitu', 'Keltské osídlenie', 'Prvá písomná zmienka 1249', 'Dynastia Árpádovcov'],
-        en: ['Inhabited since Neolithic', 'Celtic settlement', 'First written record 1249', 'Árpád dynasty'] },
-  3:  { sk: ['Model má 132 izieb', 'Autor: Adolph Stephanie', 'Požiar roku 1870', 'Národná pamiatka od 1961'],
+  2:  { sk: ['OsĂ­dlenĂ˝ od neolitu', 'KeltskĂ© osĂ­dlenie', 'PrvĂˇ pĂ­somnĂˇ zmienka 1249', 'Dynastia ĂrpĂˇdovcov'],
+        en: ['Inhabited since Neolithic', 'Celtic settlement', 'First written record 1249', 'ĂrpĂˇd dynasty'] },
+  3:  { sk: ['Model mĂˇ 132 izieb', 'Autor: Adolph Stephanie', 'PoĹľiar roku 1870', 'NĂˇrodnĂˇ pamiatka od 1961'],
         en: ['Model has 132 rooms', 'Author: Adolph Stephanie', 'Fire in 1870', 'National monument since 1961'] },
-  4:  { sk: ['Hydina, hovädzie, zverina', 'Údenie, solenie, sušenie', 'Recept z 16. storočia', 'Počas pandémií: víno a pivo'],
+  4:  { sk: ['Hydina, hovĂ¤dzie, zverina', 'Ăšdenie, solenie, suĹˇenie', 'Recept z 16. storoÄŤia', 'PoÄŤas pandĂ©miĂ­: vĂ­no a pivo'],
         en: ['Poultry, beef, game', 'Smoking, salting, drying', 'Recipe from 16th century', 'During pandemics: wine & beer'] },
-  5:  { sk: ['UNESCO od roku 1993', 'Kostolík sv. Ducha v Žehre', 'Levoča pridaná roku 2009', 'Oltár Majstra Pavla v Levoči'],
-        en: ['UNESCO since 1993', 'Church of Holy Spirit in Žehra', 'Levoča added in 2009', 'Altar of Master Pavol'] },
-  6:  { sk: ['Tatársky vpád roku 1241', 'Hrad dobytý nebol', 'Románska brána – najstaršia', 'Zápoľský rod – neskorá gotika'],
-        en: ['Tatar invasion 1241', 'Castle was never conquered', 'Romanesque gate – oldest', 'Zápoľský family – late Gothic'] },
-  7:  { sk: ['Výška 634 m n.m.', 'Vidieť Vysoké aj Nízke Tatry', 'Dve stredoveké obchodné cesty', 'Spišská Kapitula v dohľade'],
-        en: ['Altitude 634 m', 'View of High & Low Tatras', 'Two medieval trade routes', 'Spišská Kapitula visible'] },
-  8:  { sk: ['Postavené v 15. storočí', 'Ján Jiskra z Brandýsa', 'Múry 7-9 m vysoké', 'Keltská svätyňa v rohu'],
+  5:  { sk: ['UNESCO od roku 1993', 'KostolĂ­k sv. Ducha v Ĺ˝ehre', 'LevoÄŤa pridanĂˇ roku 2009', 'OltĂˇr Majstra Pavla v LevoÄŤi'],
+        en: ['UNESCO since 1993', 'Church of Holy Spirit in Ĺ˝ehra', 'LevoÄŤa added in 2009', 'Altar of Master Pavol'] },
+  6:  { sk: ['TatĂˇrsky vpĂˇd roku 1241', 'Hrad dobytĂ˝ nebol', 'RomĂˇnska brĂˇna â€“ najstarĹˇia', 'ZĂˇpoÄľskĂ˝ rod â€“ neskorĂˇ gotika'],
+        en: ['Tatar invasion 1241', 'Castle was never conquered', 'Romanesque gate â€“ oldest', 'ZĂˇpoÄľskĂ˝ family â€“ late Gothic'] },
+  7:  { sk: ['VĂ˝Ĺˇka 634 m n.m.', 'VidieĹĄ VysokĂ© aj NĂ­zke Tatry', 'Dve stredovekĂ© obchodnĂ© cesty', 'SpiĹˇskĂˇ Kapitula v dohÄľade'],
+        en: ['Altitude 634 m', 'View of High & Low Tatras', 'Two medieval trade routes', 'SpiĹˇskĂˇ Kapitula visible'] },
+  8:  { sk: ['PostavenĂ© v 15. storoÄŤĂ­', 'JĂˇn Jiskra z BrandĂ˝sa', 'MĂşry 7-9 m vysokĂ©', 'KeltskĂˇ svĂ¤tyĹa v rohu'],
         en: ['Built in 15th century', 'Jan Jiskra of Brandys', 'Walls 7-9 m high', 'Celtic sanctuary in corner'] },
-  9:  { sk: ['Legálna súdna metóda', 'Väzeň priznal z pohľadu na nástroje', 'Tmavá studená pivnica', '10 druhov mučiacich nástrojov'],
+  9:  { sk: ['LegĂˇlna sĂşdna metĂłda', 'VĂ¤zeĹ priznal z pohÄľadu na nĂˇstroje', 'TmavĂˇ studenĂˇ pivnica', '10 druhov muÄŤiacich nĂˇstrojov'],
         en: ['Legal judicial method', 'Prisoner confessed from sight of tools', 'Dark cold dungeon', '10 types of torture instruments'] },
-  10: { sk: ['Druhá románska brána', 'Zápoľský palác – renesancia', 'Prvá veža: Ø 4 m, výška 23 m', 'Padla pre tektonické posuny'],
-        en: ['Second Romanesque gate', 'Zápoľský palace – Renaissance', 'First tower: Ø 4 m, height 23 m', 'Fell due to tectonic shifts'] },
-  11: { sk: ['Výška veže 19 metrov', 'Postavil vojvoda Koloman', '5 poschodí + suterén', 'Jediný zdroj vody: cisterna'],
+  10: { sk: ['DruhĂˇ romĂˇnska brĂˇna', 'ZĂˇpoÄľskĂ˝ palĂˇc â€“ renesancia', 'PrvĂˇ veĹľa: Ă 4 m, vĂ˝Ĺˇka 23 m', 'Padla pre tektonickĂ© posuny'],
+        en: ['Second Romanesque gate', 'ZĂˇpoÄľskĂ˝ palace â€“ Renaissance', 'First tower: Ă 4 m, height 23 m', 'Fell due to tectonic shifts'] },
+  11: { sk: ['VĂ˝Ĺˇka veĹľe 19 metrov', 'Postavil vojvoda Koloman', '5 poschodĂ­ + suterĂ©n', 'JedinĂ˝ zdroj vody: cisterna'],
         en: ['Tower height 19 meters', 'Built by Duke Koloman', '5 floors + basement', 'Only water source: cistern'] },
-  12: { sk: ['1 zo 4 románskych palácov na svete', 'Ďalší je v Merane (Taliansko)', 'Kaplnka sv. Alžbety Uhorskej', '7 románskych okien'],
+  12: { sk: ['1 zo 4 romĂˇnskych palĂˇcov na svete', 'ÄŽalĹˇĂ­ je v Merane (Taliansko)', 'Kaplnka sv. AlĹľbety Uhorskej', '7 romĂˇnskych okien'],
         en: ['1 of 4 Romanesque palaces in world', 'Another one in Merano (Italy)', 'Chapel of St. Elizabeth', '7 Romanesque windows'] },
-  13: { sk: ['Najvyšší bod hradu', 'Výhľad na celé Slovensko', 'Tu sa začal príbeh hradu', '850+ rokov existencie'],
+  13: { sk: ['NajvyĹˇĹˇĂ­ bod hradu', 'VĂ˝hÄľad na celĂ© Slovensko', 'Tu sa zaÄŤal prĂ­beh hradu', '850+ rokov existencie'],
         en: ['Highest point of castle', 'View across all of Slovakia', 'Where the castle story began', '850+ years of existence'] },
   // Legendy
-  101:{ sk: ['Odvážny mních', 'Zakázaná láska', 'Hradné múry ako svedkovia', 'Legenda žije dodnes'],
+  101:{ sk: ['OdvĂˇĹľny mnĂ­ch', 'ZakĂˇzanĂˇ lĂˇska', 'HradnĂ© mĂşry ako svedkovia', 'Legenda Ĺľije dodnes'],
         en: ['Brave monk', 'Forbidden love', 'Castle walls as witnesses', 'Legend lives on today'] },
-  102:{ sk: ['Mních Roland', 'Záchrana hradu', 'Statočnosť a viera', 'Historická legenda'],
+  102:{ sk: ['MnĂ­ch Roland', 'ZĂˇchrana hradu', 'StatoÄŤnosĹĄ a viera', 'HistorickĂˇ legenda'],
         en: ['Monk Roland', 'Saving the castle', 'Courage and faith', 'Historical legend'] },
-  103:{ sk: ['Duch Spišského hradu', 'Skryté poklady Zápoľskovcov', 'Záhadné zjavenia', 'Tajomstvo hradných pivníc'],
-        en: ['Ghost of Spis Castle', 'Hidden Zápoľský treasures', 'Mysterious apparitions', 'Secret of castle cellars'] },
-  104:{ sk: ['Cigánska princezná', 'Putovanie a osud', 'Romantická legenda', 'Mágia a predsudky'],
+  103:{ sk: ['Duch SpiĹˇskĂ©ho hradu', 'SkrytĂ© poklady ZĂˇpoÄľskovcov', 'ZĂˇhadnĂ© zjavenia', 'Tajomstvo hradnĂ˝ch pivnĂ­c'],
+        en: ['Ghost of Spis Castle', 'Hidden ZĂˇpoÄľskĂ˝ treasures', 'Mysterious apparitions', 'Secret of castle cellars'] },
+  104:{ sk: ['CigĂˇnska princeznĂˇ', 'Putovanie a osud', 'RomantickĂˇ legenda', 'MĂˇgia a predsudky'],
         en: ['Gypsy princess', 'Wandering and fate', 'Romantic legend', 'Magic and prejudice'] },
 };
 
@@ -86,7 +86,7 @@ export default function TourDetailScreen() {
     const lang = selectedLanguage;
     const fallback = 'en';
     const content = stop.content?.[lang] || stop.content?.[fallback] || Object.values(stop.content || {})[0] || {};
-    const audioUrl = stop.audio?.[lang] || stop.audio?.[fallback] || Object.values(stop.audio || {})[0] || null;
+    const audioUrl = stop.translations?.find((t: any) => t.language_code === lang)?.audio_url || stop.translations?.find((t: any) => t.language_code === fallback)?.audio_url || stop.translations?.[0]?.audio_url || null;
     return {
       title: content?.title || '',
       description: content?.description || '',
@@ -125,7 +125,7 @@ export default function TourDetailScreen() {
     } else if (isCurrentStop) {
       await resumeAudio();
     } else {
-      await playAudio(id || '', translation.audio_url);
+      await playAudio(id || '', translation.audio_url ? 'http://nrjrc2wkj5nf2s5rmgxngesn.178.104.72.151.sslip.io' + translation.audio_url : null);
     }
   };
 
@@ -193,7 +193,7 @@ export default function TourDetailScreen() {
 
         {highlightList.length > 0 && (
           <View style={styles.highlightsContainer}>
-            <Text style={styles.highlightsTitle}>🏰 Highlights</Text>
+            <Text style={styles.highlightsTitle}>đźŹ° Highlights</Text>
             {highlightList.map((item, i) => (
               <View key={i} style={styles.highlightRow}>
                 <View style={styles.highlightDot} />
@@ -259,7 +259,7 @@ export default function TourDetailScreen() {
             >
               <View style={styles.nextStopContent}>
                 <View style={styles.nextStopTextContainer}>
-                  <Text style={[styles.nextStopLabel, { color: '#4CAF50' }]}>Tour Complete! 🎉</Text>
+                  <Text style={[styles.nextStopLabel, { color: '#4CAF50' }]}>Tour Complete! đźŽ‰</Text>
                   <Text style={[styles.nextStopTitle, { color: '#4CAF50' }]}>Rate your experience</Text>
                 </View>
                 <Ionicons name="star" size={28} color="#4CAF50" />
@@ -300,8 +300,8 @@ export default function TourDetailScreen() {
         <View style={styles.reviewOverlay}>
           <View style={styles.reviewCard}>
             {/* Castle icon */}
-            <Text style={styles.reviewEmoji}>🏰</Text>
-            <Text style={styles.reviewTitle}>Ako sa vám páčil sprievod?</Text>
+            <Text style={styles.reviewEmoji}>đźŹ°</Text>
+            <Text style={styles.reviewTitle}>Ako sa vĂˇm pĂˇÄŤil sprievod?</Text>
             <Text style={styles.reviewSubtitle}>How was your experience?</Text>
 
             {/* Stars */}
@@ -319,7 +319,7 @@ export default function TourDetailScreen() {
 
             {rating > 0 && (
               <Text style={styles.ratingText}>
-                {rating === 5 ? '🎉 Skúsiné!' : rating === 4 ? '😊 Veľmi dobre!' : rating === 3 ? '🙂 Dobre' : rating === 2 ? '😐 Už lepšie' : '🙁 Ospravedlňujeme sa'}
+                {rating === 5 ? 'đźŽ‰ SkĂşsinĂ©!' : rating === 4 ? 'đźŠ VeÄľmi dobre!' : rating === 3 ? 'đź™‚ Dobre' : rating === 2 ? 'đź UĹľ lepĹˇie' : 'đź™ OspravedlĹujeme sa'}
               </Text>
             )}
 
@@ -335,7 +335,7 @@ export default function TourDetailScreen() {
                   }}
                 >
                   <Ionicons name="star" size={18} color="#fff" />
-                  <Text style={styles.reviewBtnPrimaryText}>Ohodnōte nás na Google Play</Text>
+                  <Text style={styles.reviewBtnPrimaryText}>OhodnĹŤte nĂˇs na Google Play</Text>
                 </Pressable>
               )}
               <Pressable
@@ -346,7 +346,7 @@ export default function TourDetailScreen() {
                 }}
               >
                 <Text style={styles.reviewBtnSecondaryText}>
-                  {rating > 0 ? 'Pokračovat' : 'Preskočiť'}
+                  {rating > 0 ? 'PokraÄŤovat' : 'PreskoÄŤiĹĄ'}
                 </Text>
               </Pressable>
             </View>
@@ -430,3 +430,5 @@ const styles = StyleSheet.create({
   highlightDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.accent, marginRight: 10 },
   highlightText: { fontSize: 14, color: Colors.text.primary, fontWeight: '500', flex: 1 },
 });
+
+

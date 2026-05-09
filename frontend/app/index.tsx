@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+﻿import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Image, Dimensions, ActivityIndicator, ScrollView, Linking, Platform, Modal, PanResponder, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +9,7 @@ import { API_BASE_URL, getFullUrl } from '../constants/api';
 import axios from 'axios';
 
 const { width, height } = Dimensions.get('window');
-const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
+const CASTLE_IMAGE = 'http://nrjrc2wkj5nf2s5rmgxngesn.178.104.72.151.sslip.io/api/uploads/images/spis_castle_hero.jpg';
 const FALLBACK_CASTLE_IMAGE = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Spis_Castle_from_road_01.jpg/1280px-Spis_Castle_from_road_01.jpg';
 
 export default function HomeScreen() {

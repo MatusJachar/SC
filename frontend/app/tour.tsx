@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +10,7 @@ import { API_BASE_URL } from '../constants/api';
 const { width } = Dimensions.get('window');
 const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
 
-// stop_number pre tour zastávky: 1-13
+// stop_number pre tour zastĂˇvky: 1-13
 // stop_number pre legendy: 101-104
 const TOUR_DEFS: Record<string, { stops: number[]; legends: number[] }> = {
   express:  { stops: [1, 2, 3, 7, 8, 11, 12],              legends: [103] },
@@ -22,16 +22,16 @@ const STOP_ICONS: Record<number, { icon: string; bg: string }> = {
   1:  { icon: 'flag',         bg: '#D4A017' },  // Vstup / Vitajte
   2:  { icon: 'camera',       bg: '#D4A017' },  // Fotografia hradu
   3:  { icon: 'map',          bg: '#D4A017' },  // Model hradu
-  4:  { icon: 'restaurant',   bg: '#D4A017' },  // Kuchyňa
+  4:  { icon: 'restaurant',   bg: '#D4A017' },  // KuchyĹa
   5:  { icon: 'earth',        bg: '#D4A017' },  // UNESCO / Terasa
-  6:  { icon: 'shield',       bg: '#D4A017' },  // Románske predhradie / Obrana
-  7:  { icon: 'telescope',    bg: '#D4A017' },  // Horná terasa / Panoráma
-  8:  { icon: 'people',       bg: '#D4A017' },  // Dolné nádvorie
-  9:  { icon: 'skull',        bg: '#D4A017' },  // Mučiareň
-  10: { icon: 'library',      bg: '#D4A017' },  // Zápoľský palác
-  11: { icon: 'watch',        bg: '#D4A017' },  // Veža Nebojsa
-  12: { icon: 'medal',        bg: '#D4A017' },  // Románsky palác - unikát
-  13: { icon: 'sunny',        bg: '#D4A017' },  // Výhľad z akropoly
+  6:  { icon: 'shield',       bg: '#D4A017' },  // RomĂˇnske predhradie / Obrana
+  7:  { icon: 'telescope',    bg: '#D4A017' },  // HornĂˇ terasa / PanorĂˇma
+  8:  { icon: 'people',       bg: '#D4A017' },  // DolnĂ© nĂˇdvorie
+  9:  { icon: 'skull',        bg: '#D4A017' },  // MuÄŤiareĹ
+  10: { icon: 'library',      bg: '#D4A017' },  // ZĂˇpoÄľskĂ˝ palĂˇc
+  11: { icon: 'watch',        bg: '#D4A017' },  // VeĹľa Nebojsa
+  12: { icon: 'medal',        bg: '#D4A017' },  // RomĂˇnsky palĂˇc - unikĂˇt
+  13: { icon: 'sunny',        bg: '#D4A017' },  // VĂ˝hÄľad z akropoly
 };
 
 export default function TourScreen() {
@@ -56,13 +56,15 @@ export default function TourScreen() {
   const getTranslation = (stop: any) => {
     const lang = selectedLanguage;
     const fallback = 'en';
-    const content = stop.content?.[lang] || stop.content?.[fallback] || Object.values(stop.content || {})[0] || {};
-    const audioUrl = stop.audio?.[lang] || stop.audio?.[fallback] || Object.values(stop.audio || {})[0] || null;
+    const trans = stop.translations?.find((t: any) => t.language_code === lang)
+                || stop.translations?.find((t: any) => t.language_code === fallback)
+                || stop.translations?.[0]
+                || {};
     return {
-      title: content?.title || '',
-      description: content?.description || '',
-      short_description: content?.short_description || content?.description || '',
-      audio_url: audioUrl,
+      title: trans?.title || '',
+      description: trans?.description || '',
+      short_description: trans?.short_description || trans?.description || '',
+      audio_url: trans?.audio_url || null,
     };
   };
 
@@ -201,3 +203,4 @@ const styles = StyleSheet.create({
   legendDesc: { fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 17 },
   legendRight: { marginLeft: 8 },
 });
+
