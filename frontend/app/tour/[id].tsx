@@ -125,7 +125,7 @@ export default function TourDetailScreen() {
     } else if (isCurrentStop) {
       await resumeAudio();
     } else {
-      const fullAudioUrl = `${API_BASE_URL}${translation.audio_url}`;
+      const fullAudioUrl = `${API_BASE_URL.replace('/api', '')}${translation.audio_url}`;
       await playAudio(id || '', fullAudioUrl);
     }
   };

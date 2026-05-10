@@ -1,61 +1,82 @@
-{
-  "expo": {
-    "name": "Spiš Castle Audio Guide",
-    "slug": "spissky-hrad-audio-guide",
-    "version": "2.0.1",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "spis-castle-audio-guide",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.castleaudioguide.spisskyhrad",
-      "infoPlist": {
-        "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
-        }
-      }
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#5D4037"
-      },
-      "edgeToEdgeEnabled": true,
-      "package": "com.castleaudioguide.spisskyhrad",
-      "versionCode": 2,
-      "usesCleartextTraffic": true,
-      "permissions": []
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": [
-      "expo-router",
-      "expo-splash-screen",
-      "expo-font",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "usesCleartextTraffic": true
-          }
-        }
-      ]
-    ],
-    "experiments": {
-      "typedRoutes": true
-    },
-    "extra": {
-      "backendUrl": "http://178.104.72.151:8001",
-      "router": {},
-      "eas": {
-        "projectId": "296e7b0a-7db5-408e-8c5b-eb2cd61eab6b"
-      }
-    },
-    "owner": "replaced"
-  }
+﻿{
+    "expo":  {
+                 "name":  "Spissky Castle Audio Guide",
+                 "slug":  "spissky-hrad-audio-guide",
+                 "version":  "2.0.1",
+                 "orientation":  "portrait",
+                 "icon":  "./assets/images/icon.png",
+                 "scheme":  "spis-castle-audio-guide",
+                 "userInterfaceStyle":  "automatic",
+                 "newArchEnabled":  true,
+                 "ios":  {
+                             "supportsTablet":  true,
+                             "bundleIdentifier":  "com.castleaudioguide.spisskyhrad",
+                             "infoPlist":  {
+                                               "NSAppTransportSecurity":  {
+                                                                              "NSAllowsArbitraryLoads":  true
+                                                                          }
+                                           }
+                         },
+                 "android":  {
+                                 "adaptiveIcon":  {
+                                                      "foregroundImage":  "./assets/images/adaptive-icon.png",
+                                                      "backgroundColor":  "#5D4037"
+                                                  },
+                                 "edgeToEdgeEnabled":  true,
+                                 "package":  "com.castleaudioguide.spisskyhrad",
+                                 "versionCode":  2,
+                                 "usesCleartextTraffic":  true,
+                                 "permissions":  [
+
+                                                 ],
+                                 "intentFilters":  [
+                                                       {
+                                                           "category":  [
+                                                                            "BROWSABLE",
+                                                                            "DEFAULT"
+                                                                        ],
+                                                           "data":  [
+                                                                        {
+                                                                            "host":  "spissky-hrad.app",
+                                                                            "scheme":  "https",
+                                                                            "pathPrefix":  "/tour"
+                                                                        }
+                                                                    ],
+                                                           "action":  "VIEW",
+                                                           "autoVerify":  true
+                                                       }
+                                                   ]
+                             },
+                 "web":  {
+                             "bundler":  "metro",
+                             "output":  "static",
+                             "favicon":  "./assets/images/favicon.png"
+                         },
+                 "plugins":  [
+                                 "expo-router",
+                                 "expo-splash-screen",
+                                 "expo-font",
+                                 [
+                                     "expo-build-properties",
+                                     {
+                                         "android":  {
+                                                         "usesCleartextTraffic":  true
+                                                     }
+                                     }
+                                 ]
+                             ],
+                 "experiments":  {
+                                     "typedRoutes":  true
+                                 },
+                 "extra":  {
+                               "backendUrl":  "http://178.104.72.151:8001",
+                               "router":  {
+
+                                          },
+                               "eas":  {
+                                           "projectId":  "296e7b0a-7db5-408e-8c5b-eb2cd61eab6b"
+                                       }
+                           },
+                 "owner":  "replaced"
+             }
 }
