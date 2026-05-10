@@ -1,46 +1,50 @@
 ﻿import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Modal, Linking } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, Dimensions, ActivityIndicator, Modal, Linking } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../context/AppContext';
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import { API_BASE_URL } from '../../constants/api';
+import { API_BASE_URL, getFullUrl } from '../../constants/api';
 
+const CASTLE_IMAGE = `${API_BASE_URL}/uploads/images/spis_castle_hero.jpg`;
+
+// Key highlights pre kaĹľdĂş zastĂˇvku (SK + EN)
 const HIGHLIGHTS: Record<number, { sk: string[]; en: string[] }> = {
-  1:  { sk: ['634 m nad morom', 'Plocha 4 hektare', 'UNESCO od roku 1993', '9 storoci historie'],
+  1:  { sk: ['634 m nad morom', 'Plocha 4 hektĂˇre', 'UNESCO od roku 1993', '9 storoÄŤĂ­ histĂłrie'],
         en: ['634 m above sea level', 'Area of 4 hectares', 'UNESCO since 1993', '9 centuries of history'] },
-  2:  { sk: ['Osidleny od neolitu', 'Keltske osidlenie', 'Prva pisomna zmienka 1249', 'Dynastia Arpadovcov'],
-        en: ['Inhabited since Neolithic', 'Celtic settlement', 'First written record 1249', 'Arpad dynasty'] },
-  3:  { sk: ['Model ma 132 izieb', 'Autor: Adolph Stephanie', 'Poziar roku 1870', 'Narodna pamiatka od 1961'],
+  2:  { sk: ['OsĂ­dlenĂ˝ od neolitu', 'KeltskĂ© osĂ­dlenie', 'PrvĂˇ pĂ­somnĂˇ zmienka 1249', 'Dynastia ĂrpĂˇdovcov'],
+        en: ['Inhabited since Neolithic', 'Celtic settlement', 'First written record 1249', 'ĂrpĂˇd dynasty'] },
+  3:  { sk: ['Model mĂˇ 132 izieb', 'Autor: Adolph Stephanie', 'PoĹľiar roku 1870', 'NĂˇrodnĂˇ pamiatka od 1961'],
         en: ['Model has 132 rooms', 'Author: Adolph Stephanie', 'Fire in 1870', 'National monument since 1961'] },
-  4:  { sk: ['Hydina, hovadzie, zverina', 'Udenie, solenie, susenie', 'Recept z 16. storoci', 'Pocas pandemii: vino a pivo'],
+  4:  { sk: ['Hydina, hovĂ¤dzie, zverina', 'Ăšdenie, solenie, suĹˇenie', 'Recept z 16. storoÄŤia', 'PoÄŤas pandĂ©miĂ­: vĂ­no a pivo'],
         en: ['Poultry, beef, game', 'Smoking, salting, drying', 'Recipe from 16th century', 'During pandemics: wine & beer'] },
-  5:  { sk: ['UNESCO od roku 1993', 'Kostolk sv. Ducha v Zehre', 'Levoca pridana roku 2009', 'Oltar Majstra Pavla v Levoci'],
-        en: ['UNESCO since 1993', 'Church of Holy Spirit in Zehra', 'Levoca added in 2009', 'Altar of Master Pavol'] },
-  6:  { sk: ['Tatarsky vpad roku 1241', 'Hrad dobity nebol', 'Romanska brana - najstarsie', 'Zapolsky rod - nesroka gotika'],
-        en: ['Tatar invasion 1241', 'Castle was never conquered', 'Romanesque gate - oldest', 'Zapolsky family - late Gothic'] },
-  7:  { sk: ['Vyska 634 m n.m.', 'Vidies Vysoke aj Nizke Tatry', 'Dve stredoveke obchodne cesty', 'Spisska Kapitula v dohliade'],
-        en: ['Altitude 634 m', 'View of High & Low Tatras', 'Two medieval trade routes', 'Spisska Kapitula visible'] },
-  8:  { sk: ['Postavene v 15. storoci', 'Jan Jiskra z Brandysa', 'Mury 7-9 m vysoke', 'Keltska sviatynia v rohu'],
+  5:  { sk: ['UNESCO od roku 1993', 'KostolĂ­k sv. Ducha v Ĺ˝ehre', 'LevoÄŤa pridanĂˇ roku 2009', 'OltĂˇr Majstra Pavla v LevoÄŤi'],
+        en: ['UNESCO since 1993', 'Church of Holy Spirit in Ĺ˝ehra', 'LevoÄŤa added in 2009', 'Altar of Master Pavol'] },
+  6:  { sk: ['TatĂˇrsky vpĂˇd roku 1241', 'Hrad dobytĂ˝ nebol', 'RomĂˇnska brĂˇna â€“ najstarĹˇia', 'ZĂˇpoÄľskĂ˝ rod â€“ neskorĂˇ gotika'],
+        en: ['Tatar invasion 1241', 'Castle was never conquered', 'Romanesque gate â€“ oldest', 'ZĂˇpoÄľskĂ˝ family â€“ late Gothic'] },
+  7:  { sk: ['VĂ˝Ĺˇka 634 m n.m.', 'VidieĹĄ VysokĂ© aj NĂ­zke Tatry', 'Dve stredovekĂ© obchodnĂ© cesty', 'SpiĹˇskĂˇ Kapitula v dohÄľade'],
+        en: ['Altitude 634 m', 'View of High & Low Tatras', 'Two medieval trade routes', 'SpiĹˇskĂˇ Kapitula visible'] },
+  8:  { sk: ['PostavenĂ© v 15. storoÄŤĂ­', 'JĂˇn Jiskra z BrandĂ˝sa', 'MĂşry 7-9 m vysokĂ©', 'KeltskĂˇ svĂ¤tyĹa v rohu'],
         en: ['Built in 15th century', 'Jan Jiskra of Brandys', 'Walls 7-9 m high', 'Celtic sanctuary in corner'] },
-  9:  { sk: ['Legalna sudna metoda', 'Vazen priznal z pohladu na nastroje', 'Tmava studena pivnica', '10 druhov muciacich nastrojov'],
+  9:  { sk: ['LegĂˇlna sĂşdna metĂłda', 'VĂ¤zeĹ priznal z pohÄľadu na nĂˇstroje', 'TmavĂˇ studenĂˇ pivnica', '10 druhov muÄŤiacich nĂˇstrojov'],
         en: ['Legal judicial method', 'Prisoner confessed from sight of tools', 'Dark cold dungeon', '10 types of torture instruments'] },
-  10: { sk: ['Druha romanska brana', 'Zapolsky palac - renesancia', 'Prva veza: 4 m, vyska 23 m', 'Padla pre tektonicke posuny'],
-        en: ['Second Romanesque gate', 'Zapolsky palace - Renaissance', 'First tower: 4 m, height 23 m', 'Fell due to tectonic shifts'] },
-  11: { sk: ['Vyska veze 19 metrov', 'Postavil vojvoda Koloman', '5 poschodov + sutren', 'Jediny zdroj vody: cisterna'],
+  10: { sk: ['DruhĂˇ romĂˇnska brĂˇna', 'ZĂˇpoÄľskĂ˝ palĂˇc â€“ renesancia', 'PrvĂˇ veĹľa: Ă 4 m, vĂ˝Ĺˇka 23 m', 'Padla pre tektonickĂ© posuny'],
+        en: ['Second Romanesque gate', 'ZĂˇpoÄľskĂ˝ palace â€“ Renaissance', 'First tower: Ă 4 m, height 23 m', 'Fell due to tectonic shifts'] },
+  11: { sk: ['VĂ˝Ĺˇka veĹľe 19 metrov', 'Postavil vojvoda Koloman', '5 poschodĂ­ + suterĂ©n', 'JedinĂ˝ zdroj vody: cisterna'],
         en: ['Tower height 19 meters', 'Built by Duke Koloman', '5 floors + basement', 'Only water source: cistern'] },
-  12: { sk: ['1 zo 4 romanskych palacov na svete', 'Dalsi je v Merane (Taliansko)', 'Kaplnka sv. Alzbety Uhorskej', '7 romanskych okien'],
+  12: { sk: ['1 zo 4 romĂˇnskych palĂˇcov na svete', 'ÄŽalĹˇĂ­ je v Merane (Taliansko)', 'Kaplnka sv. AlĹľbety Uhorskej', '7 romĂˇnskych okien'],
         en: ['1 of 4 Romanesque palaces in world', 'Another one in Merano (Italy)', 'Chapel of St. Elizabeth', '7 Romanesque windows'] },
-  13: { sk: ['Najvyssi bod hradu', 'Vyhlad na cele Slovensko', 'Tu sa zacal pribeh hradu', '850+ rokov existencie'],
+  13: { sk: ['NajvyĹˇĹˇĂ­ bod hradu', 'VĂ˝hÄľad na celĂ© Slovensko', 'Tu sa zaÄŤal prĂ­beh hradu', '850+ rokov existencie'],
         en: ['Highest point of castle', 'View across all of Slovakia', 'Where the castle story began', '850+ years of existence'] },
-  101:{ sk: ['Odvazny mnich', 'Zakazana laska', 'Hradne mury ako svedkovia', 'Legenda zije dodnes'],
+  // Legendy
+  101:{ sk: ['OdvĂˇĹľny mnĂ­ch', 'ZakĂˇzanĂˇ lĂˇska', 'HradnĂ© mĂşry ako svedkovia', 'Legenda Ĺľije dodnes'],
         en: ['Brave monk', 'Forbidden love', 'Castle walls as witnesses', 'Legend lives on today'] },
-  102:{ sk: ['Mnich Roland', 'Zachrana hradu', 'Statocnost a viera', 'Historicka legenda'],
+  102:{ sk: ['MnĂ­ch Roland', 'ZĂˇchrana hradu', 'StatoÄŤnosĹĄ a viera', 'HistorickĂˇ legenda'],
         en: ['Monk Roland', 'Saving the castle', 'Courage and faith', 'Historical legend'] },
-  103:{ sk: ['Duch Spiskeho hradu', 'Skryte poklady Zapolskovcov', 'Zahadne zjavenia', 'Tajomstvo hradnych pivnic'],
-        en: ['Ghost of Spis Castle', 'Hidden Zapolsky treasures', 'Mysterious apparitions', 'Secret of castle cellars'] },
-  104:{ sk: ['Ciganska princezna', 'Putovanie a osud', 'Romanticka legenda', 'Magia a predsudky'],
+  103:{ sk: ['Duch SpiĹˇskĂ©ho hradu', 'SkrytĂ© poklady ZĂˇpoÄľskovcov', 'ZĂˇhadnĂ© zjavenia', 'Tajomstvo hradnĂ˝ch pivnĂ­c'],
+        en: ['Ghost of Spis Castle', 'Hidden ZĂˇpoÄľskĂ˝ treasures', 'Mysterious apparitions', 'Secret of castle cellars'] },
+  104:{ sk: ['CigĂˇnska princeznĂˇ', 'Putovanie a osud', 'RomantickĂˇ legenda', 'MĂˇgia a predsudky'],
         en: ['Gypsy princess', 'Wandering and fate', 'Romantic legend', 'Magic and prejudice'] },
 };
 
@@ -54,6 +58,7 @@ export default function TourDetailScreen() {
     playAudio, pauseAudio, resumeAudio, skipForward, skipBackward, stopAudio,
   } = useApp();
 
+  // Build ordered list of stops for this tour type
   const TOUR_DEFS: Record<string, { stops: number[]; legends: number[] }> = {
     express:  { stops: [1, 2, 3, 7, 8, 11, 12],              legends: [103] },
     family:   { stops: [1, 2, 4, 8, 9, 11, 12],              legends: [101, 104] },
@@ -80,14 +85,12 @@ export default function TourDetailScreen() {
     if (!stop) return null;
     const lang = selectedLanguage;
     const fallback = 'en';
-    const t = stop.translations?.find((x: any) => x.language_code === lang)
-           || stop.translations?.find((x: any) => x.language_code === fallback)
-           || stop.translations?.[0]
-           || {};
+    const content = stop.content?.[lang] || stop.content?.[fallback] || Object.values(stop.content || {})[0] || {};
+    const audioUrl = stop.audio?.[lang] || stop.audio?.[fallback] || Object.values(stop.audio || {})[0] || null;
     return {
-      title: t.title || '',
-      description: t.description || '',
-      audio_url: t.audio_url || null,
+      title: content?.title || '',
+      description: content?.description || '',
+      audio_url: audioUrl,
     };
   }, [stop, selectedLanguage]);
 
@@ -95,11 +98,8 @@ export default function TourDetailScreen() {
     if (!nextStop) return null;
     const lang = selectedLanguage;
     const fallback = 'en';
-    const t = nextStop.translations?.find((x: any) => x.language_code === lang)
-           || nextStop.translations?.find((x: any) => x.language_code === fallback)
-           || nextStop.translations?.[0]
-           || {};
-    return { title: t.title || '' };
+    const content = nextStop.content?.[lang] || nextStop.content?.[fallback] || Object.values(nextStop.content || {})[0] || {};
+    return { title: content?.title || '' };
   }, [nextStop, selectedLanguage]);
 
   const isCurrentStop = currentStopId === id;
@@ -125,8 +125,7 @@ export default function TourDetailScreen() {
     } else if (isCurrentStop) {
       await resumeAudio();
     } else {
-      const fullAudioUrl = `${API_BASE_URL}${translation.audio_url}`;
-      await playAudio(id || '', fullAudioUrl);
+      await playAudio(id || '', translation.audio_url ? 'http://nrjrc2wkj5nf2s5rmgxngesn.178.104.72.151.sslip.io' + translation.audio_url : null);
     }
   };
 
@@ -154,6 +153,7 @@ export default function TourDetailScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 4 }]}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color={Colors.text.primary} />
@@ -166,13 +166,24 @@ export default function TourDetailScreen() {
             }
           </View>
         </View>
+        {/* Stop counter */}
         <Text style={styles.stopCounter}>{currentIndex + 1}/{orderedStops.length}</Text>
       </View>
 
-      <View style={styles.titleContainer}>
-        <Text style={styles.titleText} numberOfLines={2}>{translation?.title || 'Tour Stop'}</Text>
+      {/* Hero image */}
+      <View style={styles.heroContainer}>
+        <Image
+          source={{ uri: stop.image_url ? getFullUrl(stop.image_url) : CASTLE_IMAGE }}
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
+        <View style={styles.heroOverlay} />
+        <View style={styles.heroTitleContainer}>
+          <Text style={styles.heroTitle} numberOfLines={2}>{translation?.title || 'Tour Stop'}</Text>
+        </View>
       </View>
 
+      {/* Description */}
       <ScrollView
         style={styles.scrollContent}
         contentContainerStyle={[styles.scrollContentInner, { paddingBottom: 16 }]}
@@ -182,7 +193,7 @@ export default function TourDetailScreen() {
 
         {highlightList.length > 0 && (
           <View style={styles.highlightsContainer}>
-            <Text style={styles.highlightsTitle}>Highlights</Text>
+            <Text style={styles.highlightsTitle}>đźŹ° Highlights</Text>
             {highlightList.map((item, i) => (
               <View key={i} style={styles.highlightRow}>
                 <View style={styles.highlightDot} />
@@ -193,8 +204,10 @@ export default function TourDetailScreen() {
         )}
       </ScrollView>
 
+      {/* Audio Player */}
       {hasAudio && (
         <View style={[styles.audioPlayer, { paddingBottom: insets.bottom > 0 ? insets.bottom : 8 }]}>
+          {/* Progress bar */}
           <View style={styles.progressContainer}>
             <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
           </View>
@@ -202,6 +215,8 @@ export default function TourDetailScreen() {
             <Text style={styles.timeText}>{isCurrentStop ? formatTime(playbackPosition) : '0:00'}</Text>
             <Text style={styles.timeText}>{isCurrentStop ? formatTime(playbackDuration) : '--:--'}</Text>
           </View>
+
+          {/* Controls row */}
           <View style={styles.controls}>
             <Pressable onPress={skipBackward} style={styles.controlButton}>
               <Ionicons name="play-back" size={24} color={Colors.text.primary} />
@@ -217,6 +232,8 @@ export default function TourDetailScreen() {
               <Ionicons name="play-forward" size={24} color={Colors.text.primary} />
             </Pressable>
           </View>
+
+          {/* Next Stop button */}
           {!isLastStop && (
             <Pressable
               style={({ pressed }) => [styles.nextStopButton, pressed && styles.nextStopButtonPressed]}
@@ -225,12 +242,16 @@ export default function TourDetailScreen() {
               <View style={styles.nextStopContent}>
                 <View style={styles.nextStopTextContainer}>
                   <Text style={styles.nextStopLabel}>Next Stop</Text>
-                  <Text style={styles.nextStopTitle} numberOfLines={1}>{nextTranslation?.title || ''}</Text>
+                  <Text style={styles.nextStopTitle} numberOfLines={1}>
+                    {nextTranslation?.title || ''}
+                  </Text>
                 </View>
                 <Ionicons name="arrow-forward-circle" size={28} color={Colors.accent} />
               </View>
             </Pressable>
           )}
+
+          {/* Last stop message */}
           {isLastStop && (
             <Pressable
               style={({ pressed }) => [styles.nextStopButton, { backgroundColor: '#F0F8F0' }, pressed && { opacity: 0.8 }]}
@@ -238,7 +259,7 @@ export default function TourDetailScreen() {
             >
               <View style={styles.nextStopContent}>
                 <View style={styles.nextStopTextContainer}>
-                  <Text style={[styles.nextStopLabel, { color: '#4CAF50' }]}>Tour Complete!</Text>
+                  <Text style={[styles.nextStopLabel, { color: '#4CAF50' }]}>Tour Complete! đźŽ‰</Text>
                   <Text style={[styles.nextStopTitle, { color: '#4CAF50' }]}>Rate your experience</Text>
                 </View>
                 <Ionicons name="star" size={28} color="#4CAF50" />
@@ -248,6 +269,7 @@ export default function TourDetailScreen() {
         </View>
       )}
 
+      {/* No audio */}
       {!hasAudio && (
         <View style={[styles.audioPlayer, { paddingBottom: insets.bottom > 0 ? insets.bottom : 8 }]}>
           <View style={styles.noAudioRow}>
@@ -262,7 +284,9 @@ export default function TourDetailScreen() {
               <View style={styles.nextStopContent}>
                 <View style={styles.nextStopTextContainer}>
                   <Text style={styles.nextStopLabel}>Next Stop</Text>
-                  <Text style={styles.nextStopTitle} numberOfLines={1}>{nextTranslation?.title || ''}</Text>
+                  <Text style={styles.nextStopTitle} numberOfLines={1}>
+                    {nextTranslation?.title || ''}
+                  </Text>
                 </View>
                 <Ionicons name="arrow-forward-circle" size={28} color={Colors.accent} />
               </View>
@@ -271,11 +295,16 @@ export default function TourDetailScreen() {
         </View>
       )}
 
+      {/* ===== REVIEW MODAL ===== */}
       <Modal visible={showReview} transparent animationType="fade">
         <View style={styles.reviewOverlay}>
           <View style={styles.reviewCard}>
-            <Text style={styles.reviewTitle}>Ako sa vam pacil sprievod?</Text>
+            {/* Castle icon */}
+            <Text style={styles.reviewEmoji}>đźŹ°</Text>
+            <Text style={styles.reviewTitle}>Ako sa vĂˇm pĂˇÄŤil sprievod?</Text>
             <Text style={styles.reviewSubtitle}>How was your experience?</Text>
+
+            {/* Stars */}
             <View style={styles.starsRow}>
               {[1,2,3,4,5].map(star => (
                 <Pressable key={star} onPress={() => setRating(star)} style={styles.starBtn}>
@@ -287,30 +316,38 @@ export default function TourDetailScreen() {
                 </Pressable>
               ))}
             </View>
+
             {rating > 0 && (
               <Text style={styles.ratingText}>
-                {rating === 5 ? 'Skvelé!' : rating === 4 ? 'Velmi dobre!' : rating === 3 ? 'Dobre' : rating === 2 ? 'Uz lepsie' : 'Ospravedlnujeme sa'}
+                {rating === 5 ? 'đźŽ‰ SkĂşsinĂ©!' : rating === 4 ? 'đźŠ VeÄľmi dobre!' : rating === 3 ? 'đź™‚ Dobre' : rating === 2 ? 'đź UĹľ lepĹˇie' : 'đź™ OspravedlĹujeme sa'}
               </Text>
             )}
+
+            {/* Action buttons */}
             <View style={styles.reviewActions}>
               {rating >= 4 && (
                 <Pressable
                   style={styles.reviewBtnPrimary}
                   onPress={() => {
-                    Linking.openURL('https://play.google.com/store/apps/details?id=com.castleaudioguide.spisskyhrad');
+                    Linking.openURL('https://play.google.com/store/apps/details?id=com.spiscastle.audioguide');
                     setShowReview(false);
                     router.replace('/');
                   }}
                 >
                   <Ionicons name="star" size={18} color="#fff" />
-                  <Text style={styles.reviewBtnPrimaryText}>Ohodnodte nas na Google Play</Text>
+                  <Text style={styles.reviewBtnPrimaryText}>OhodnĹŤte nĂˇs na Google Play</Text>
                 </Pressable>
               )}
               <Pressable
                 style={styles.reviewBtnSecondary}
-                onPress={() => { setShowReview(false); router.replace('/'); }}
+                onPress={() => {
+                  setShowReview(false);
+                  router.replace('/');
+                }}
               >
-                <Text style={styles.reviewBtnSecondaryText}>{rating > 0 ? 'Pokracovat' : 'Preskocit'}</Text>
+                <Text style={styles.reviewBtnSecondaryText}>
+                  {rating > 0 ? 'PokraÄŤovat' : 'PreskoÄŤiĹĄ'}
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -322,22 +359,28 @@ export default function TourDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
+
+  // Header
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingBottom: 6, backgroundColor: Colors.background },
   backButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#FFF3CD', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 },
   headerBadgeText: { fontSize: 13, fontWeight: '800', color: Colors.accent },
   stopCounter: { width: 44, textAlign: 'center', fontSize: 12, color: Colors.text.light, fontWeight: '600' },
-  titleContainer: { marginHorizontal: 16, marginBottom: 4, backgroundColor: Colors.accent, borderRadius: 16, padding: 18, justifyContent: 'center' },
-  titleText: { fontSize: 22, fontWeight: '800', color: '#FFFFFF', lineHeight: 28 },
+
+  // Hero
+  heroContainer: { height: 160, position: 'relative', marginHorizontal: 16, borderRadius: 16, overflow: 'hidden' },
+  heroImage: { width: '100%', height: '100%' },
+  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
+  heroTitleContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 14 },
+  heroTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF', lineHeight: 28, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
+
+  // Content
   scrollContent: { flex: 1 },
   scrollContentInner: { paddingHorizontal: 20, paddingTop: 16 },
   description: { fontSize: 15, color: Colors.text.primary, lineHeight: 24, fontWeight: '400', letterSpacing: 0.2 },
-  highlightsContainer: { marginTop: 20, backgroundColor: '#FFF8E7', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#F0E0B0' },
-  highlightsTitle: { fontSize: 13, fontWeight: '800', color: Colors.accent, marginBottom: 10, letterSpacing: 0.5 },
-  highlightRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 7 },
-  highlightDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.accent, marginRight: 10 },
-  highlightText: { fontSize: 14, color: Colors.text.primary, fontWeight: '500', flex: 1 },
+
+  // Audio player
   audioPlayer: { backgroundColor: Colors.white, paddingTop: 8, paddingHorizontal: 16, borderTopWidth: 1, borderTopColor: Colors.borderLight },
   progressContainer: { height: 3, backgroundColor: '#E8E8E8', borderRadius: 2, overflow: 'hidden' },
   progressBar: { height: '100%', backgroundColor: Colors.accent, borderRadius: 2 },
@@ -346,16 +389,29 @@ const styles = StyleSheet.create({
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28, paddingVertical: 6 },
   controlButton: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
   playButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: Colors.accent, justifyContent: 'center', alignItems: 'center' },
-  nextStopButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF8E7', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginTop: 6, marginBottom: 2, borderWidth: 1, borderColor: '#F0E0B0' },
+
+  // Next Stop button
+  nextStopButton: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#FFF8E7',
+    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
+    marginTop: 6, marginBottom: 2,
+    borderWidth: 1, borderColor: '#F0E0B0',
+  },
   nextStopButtonPressed: { backgroundColor: '#FFF0CC', opacity: 0.9 },
   nextStopContent: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   nextStopTextContainer: { flex: 1, marginRight: 8 },
   nextStopLabel: { fontSize: 10, fontWeight: '700', color: Colors.accent, textTransform: 'uppercase', letterSpacing: 0.5 },
   nextStopTitle: { fontSize: 14, fontWeight: '700', color: Colors.text.primary, marginTop: 1 },
+
+  // No audio
   noAudioRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10 },
   noAudioText: { fontSize: 13, color: Colors.text.light },
+
+  // Review Modal
   reviewOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
   reviewCard: { backgroundColor: '#fff', borderRadius: 24, padding: 28, width: '100%', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
+  reviewEmoji: { fontSize: 52, marginBottom: 12 },
   reviewTitle: { fontSize: 20, fontWeight: '800', color: Colors.text.primary, textAlign: 'center', marginBottom: 4 },
   reviewSubtitle: { fontSize: 14, color: Colors.text.light, textAlign: 'center', marginBottom: 20 },
   starsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
@@ -366,4 +422,14 @@ const styles = StyleSheet.create({
   reviewBtnPrimaryText: { fontSize: 15, fontWeight: '800', color: '#fff' },
   reviewBtnSecondary: { alignItems: 'center', paddingVertical: 12 },
   reviewBtnSecondaryText: { fontSize: 14, color: Colors.text.light, fontWeight: '600' },
+
+  // Highlights
+  highlightsContainer: { marginTop: 20, backgroundColor: '#FFF8E7', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#F0E0B0' },
+  highlightsTitle: { fontSize: 13, fontWeight: '800', color: Colors.accent, marginBottom: 10, letterSpacing: 0.5 },
+  highlightRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 7 },
+  highlightDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.accent, marginRight: 10 },
+  highlightText: { fontSize: 14, color: Colors.text.primary, fontWeight: '500', flex: 1 },
 });
+
+
+
