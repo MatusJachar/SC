@@ -86,7 +86,7 @@ export default function TourDetailScreen() {
     const lang = selectedLanguage;
     const fallback = 'en';
     const content = stop.content?.[lang] || stop.content?.[fallback] || Object.values(stop.content || {})[0] || {};
-    const audioUrl = stop.translations?.find((t: any) => t.language_code === lang)?.audio_url || stop.translations?.find((t: any) => t.language_code === fallback)?.audio_url || stop.translations?.[0]?.audio_url || null;
+    const audioUrl = stop.audio?.[lang] || stop.audio?.[fallback] || Object.values(stop.audio || {})[0] || null;
     return {
       title: content?.title || '',
       description: content?.description || '',
@@ -430,5 +430,6 @@ const styles = StyleSheet.create({
   highlightDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.accent, marginRight: 10 },
   highlightText: { fontSize: 14, color: Colors.text.primary, fontWeight: '500', flex: 1 },
 });
+
 
 

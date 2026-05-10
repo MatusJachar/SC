@@ -56,15 +56,13 @@ export default function TourScreen() {
   const getTranslation = (stop: any) => {
     const lang = selectedLanguage;
     const fallback = 'en';
-    const trans = stop.translations?.find((t: any) => t.language_code === lang)
-                || stop.translations?.find((t: any) => t.language_code === fallback)
-                || stop.translations?.[0]
-                || {};
+    const content = stop.content?.[lang] || stop.content?.[fallback] || Object.values(stop.content || {})[0] || {};
+    const audioUrl = stop.audio?.[lang] || stop.audio?.[fallback] || Object.values(stop.audio || {})[0] || null;
     return {
-      title: trans?.title || '',
-      description: trans?.description || '',
-      short_description: trans?.short_description || trans?.description || '',
-      audio_url: trans?.audio_url || null,
+      title: content?.title || '',
+      description: content?.description || '',
+      short_description: content?.short_description || content?.description || '',
+      audio_url: audioUrl,
     };
   };
 
@@ -203,4 +201,5 @@ const styles = StyleSheet.create({
   legendDesc: { fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 17 },
   legendRight: { marginLeft: 8 },
 });
+
 
