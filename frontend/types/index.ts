@@ -17,6 +17,7 @@ export interface Translation {
   audio_url: string | null;
   video_url?: string | null;
   vr_url?: string | null;
+  highlights?: string[];
 }
 
 export interface TourStop {

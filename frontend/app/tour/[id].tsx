@@ -7,43 +7,6 @@ import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { API_BASE_URL } from '../../constants/api';
 
-const HIGHLIGHTS: Record<number, { sk: string[]; en: string[] }> = {
-  1:  { sk: ['634 m nad morom', 'Plocha 4 hektare', 'UNESCO od roku 1993', '9 storoci historie'],
-        en: ['634 m above sea level', 'Area of 4 hectares', 'UNESCO since 1993', '9 centuries of history'] },
-  2:  { sk: ['Osidleny od neolitu', 'Keltske osidlenie', 'Prva pisomna zmienka 1249', 'Dynastia Arpadovcov'],
-        en: ['Inhabited since Neolithic', 'Celtic settlement', 'First written record 1249', 'Arpad dynasty'] },
-  3:  { sk: ['Model ma 132 izieb', 'Autor: Adolph Stephanie', 'Poziar roku 1870', 'Narodna pamiatka od 1961'],
-        en: ['Model has 132 rooms', 'Author: Adolph Stephanie', 'Fire in 1870', 'National monument since 1961'] },
-  4:  { sk: ['Hydina, hovadzie, zverina', 'Udenie, solenie, susenie', 'Recept z 16. storoci', 'Pocas pandemii: vino a pivo'],
-        en: ['Poultry, beef, game', 'Smoking, salting, drying', 'Recipe from 16th century', 'During pandemics: wine & beer'] },
-  5:  { sk: ['UNESCO od roku 1993', 'Kostolk sv. Ducha v Zehre', 'Levoca pridana roku 2009', 'Oltar Majstra Pavla v Levoci'],
-        en: ['UNESCO since 1993', 'Church of Holy Spirit in Zehra', 'Levoca added in 2009', 'Altar of Master Pavol'] },
-  6:  { sk: ['Tatarsky vpad roku 1241', 'Hrad dobity nebol', 'Romanska brana - najstarsie', 'Zapolsky rod - nesroka gotika'],
-        en: ['Tatar invasion 1241', 'Castle was never conquered', 'Romanesque gate - oldest', 'Zapolsky family - late Gothic'] },
-  7:  { sk: ['Vyska 634 m n.m.', 'Vidies Vysoke aj Nizke Tatry', 'Dve stredoveke obchodne cesty', 'Spisska Kapitula v dohliade'],
-        en: ['Altitude 634 m', 'View of High & Low Tatras', 'Two medieval trade routes', 'Spisska Kapitula visible'] },
-  8:  { sk: ['Postavene v 15. storoci', 'Jan Jiskra z Brandysa', 'Mury 7-9 m vysoke', 'Keltska sviatynia v rohu'],
-        en: ['Built in 15th century', 'Jan Jiskra of Brandys', 'Walls 7-9 m high', 'Celtic sanctuary in corner'] },
-  9:  { sk: ['Legalna sudna metoda', 'Vazen priznal z pohladu na nastroje', 'Tmava studena pivnica', '10 druhov muciacich nastrojov'],
-        en: ['Legal judicial method', 'Prisoner confessed from sight of tools', 'Dark cold dungeon', '10 types of torture instruments'] },
-  10: { sk: ['Druha romanska brana', 'Zapolsky palac - renesancia', 'Prva veza: 4 m, vyska 23 m', 'Padla pre tektonicke posuny'],
-        en: ['Second Romanesque gate', 'Zapolsky palace - Renaissance', 'First tower: 4 m, height 23 m', 'Fell due to tectonic shifts'] },
-  11: { sk: ['Vyska veze 19 metrov', 'Postavil vojvoda Koloman', '5 poschodov + sutren', 'Jediny zdroj vody: cisterna'],
-        en: ['Tower height 19 meters', 'Built by Duke Koloman', '5 floors + basement', 'Only water source: cistern'] },
-  12: { sk: ['1 zo 4 romanskych palacov na svete', 'Dalsi je v Merane (Taliansko)', 'Kaplnka sv. Alzbety Uhorskej', '7 romanskych okien'],
-        en: ['1 of 4 Romanesque palaces in world', 'Another one in Merano (Italy)', 'Chapel of St. Elizabeth', '7 Romanesque windows'] },
-  13: { sk: ['Najvyssi bod hradu', 'Vyhlad na cele Slovensko', 'Tu sa zacal pribeh hradu', '850+ rokov existencie'],
-        en: ['Highest point of castle', 'View across all of Slovakia', 'Where the castle story began', '850+ years of existence'] },
-  101:{ sk: ['Odvazny mnich', 'Zakazana laska', 'Hradne mury ako svedkovia', 'Legenda zije dodnes'],
-        en: ['Brave monk', 'Forbidden love', 'Castle walls as witnesses', 'Legend lives on today'] },
-  102:{ sk: ['Mnich Roland', 'Zachrana hradu', 'Statocnost a viera', 'Historicka legenda'],
-        en: ['Monk Roland', 'Saving the castle', 'Courage and faith', 'Historical legend'] },
-  103:{ sk: ['Duch Spiskeho hradu', 'Skryte poklady Zapolskovcov', 'Zahadne zjavenia', 'Tajomstvo hradnych pivnic'],
-        en: ['Ghost of Spis Castle', 'Hidden Zapolsky treasures', 'Mysterious apparitions', 'Secret of castle cellars'] },
-  104:{ sk: ['Ciganska princezna', 'Putovanie a osud', 'Romanticka legenda', 'Magia a predsudky'],
-        en: ['Gypsy princess', 'Wandering and fate', 'Romantic legend', 'Magic and prejudice'] },
-};
-
 export default function TourDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -104,8 +67,8 @@ export default function TourDetailScreen() {
 
   const isCurrentStop = currentStopId === id;
   const hasAudio = !!translation?.audio_url;
-  const highlights = HIGHLIGHTS[stop?.stop_number || 0];
-  const highlightList = highlights ? (selectedLanguage === 'sk' ? highlights.sk : highlights.en) : [];
+  const highlightList = stop?.translations?.find(t => t.language_code === selectedLanguage)?.highlights || [];
+
   const [showReview, setShowReview] = useState(false);
   const [rating, setRating] = useState(0);
 

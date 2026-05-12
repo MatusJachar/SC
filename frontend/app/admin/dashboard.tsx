@@ -120,9 +120,12 @@ export default function AdminDashboard() {
   const [editImageUrl, setEditImageUrl] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageEditStop, setImageEditStop] = useState<TourStop | null>(null);
-  
-  // Audio URL editing  
+
+  // Audio URL editing
   const [editAudioUrl, setEditAudioUrl] = useState('');
+
+  // Highlights editing (per language)
+  const [editHighlights, setEditHighlights] = useState<string[]>(['', '', '', '']);
   
   // Stop number editing
   const [editStopNumber, setEditStopNumber] = useState('');
@@ -195,8 +198,10 @@ export default function AdminDashboard() {
     setEditDescription(trans?.description || '');
     setEditShortDesc(trans?.short_description || '');
     setEditAudioUrl(trans?.audio_url || '');
+    setEditHighlights(trans?.highlights || ['', '', '', '']);
     setEditStopNumber(String(stop.stop_number));
     setShowEditModal(true);
+  
   };
 
   const saveStopEdit = async () => {
@@ -205,7 +210,8 @@ export default function AdminDashboard() {
     try {
       const updatedTranslations = editingStop.translations.map(t => {
         if (t.language_code === editingLang) {
-          return { ...t, title: editTitle, description: editDescription, short_description: editShortDesc, audio_url: editAudioUrl || t.audio_url };
+         return { ...t, title: editTitle, description: editDescription, short_description: editShortDesc, audio_url: editAudioUrl || t.audio_url, highlights: editHighlights.filter(h => h.trim() !== '') };
+        
         }
         return t;
       });
@@ -944,6 +950,21 @@ export default function AdminDashboard() {
               <TextInput style={[styles.modalInput, styles.modalTextarea]} value={editDescription} onChangeText={setEditDescription} multiline numberOfLines={8} placeholderTextColor={Colors.text.light} />
               <Text style={styles.label}>Audio URL ({editingLang.toUpperCase()})</Text>
               <TextInput style={styles.modalInput} value={editAudioUrl} onChangeText={setEditAudioUrl} placeholderTextColor={Colors.text.light} placeholder="/api/uploads/audio/stop1_en.mp3" />
+              <Text style={styles.label}>Highlights ({editingLang.toUpperCase()})</Text>
+              {[0,1,2,3].map(i => (
+                <TextInput
+                  key={i}
+                  style={[styles.modalInput, { marginBottom: 6 }]}
+                  value={editHighlights[i] || ''}
+                  onChangeText={val => {
+                    const updated = [...editHighlights];
+                    updated[i] = val;
+                    setEditHighlights(updated);
+                  }}
+                  placeholderTextColor={Colors.text.light}
+                  placeholder={`Highlight ${i + 1}`}
+                />
+              ))}
             </ScrollView>
             <Pressable style={[styles.saveBtn, saving && { opacity: 0.7 }]} onPress={saveStopEdit} disabled={saving}>
               {saving ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
