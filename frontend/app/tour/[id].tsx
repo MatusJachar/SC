@@ -67,7 +67,7 @@ export default function TourDetailScreen() {
 
   const isCurrentStop = currentStopId === id;
   const hasAudio = !!translation?.audio_url;
-  const highlightList = stop?.translations?.find(t => t.language_code === selectedLanguage)?.highlights || [];
+  const highlightList = stop?.content?.[selectedLanguage]?.highlights || stop?.content?.['en']?.highlights || [];
 
   const [showReview, setShowReview] = useState(false);
   const [rating, setRating] = useState(0);
