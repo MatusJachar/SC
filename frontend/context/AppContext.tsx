@@ -183,6 +183,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             title: t.title,
             description: t.description,
             short_description: t.short_description || t.description,
+            highlights: t.highlights || [],
           };
           if (t.audio_url) {
             const rawUrl = t.audio_url;
