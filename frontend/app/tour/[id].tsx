@@ -47,10 +47,11 @@ export default function TourDetailScreen() {
            || stop.translations?.find((x: any) => x.language_code === fallback)
            || stop.translations?.[0]
            || {};
+    const c = stop.content?.[lang] || stop.content?.[fallback] || {};
     return {
-      title: t.title || '',
-      description: t.description || '',
-      audio_url: t.audio_url || null,
+      title: t.title || c.title || '',
+      description: t.description || c.description || '',
+      audio_url: t.audio_url || stop.audio?.[lang] || stop.audio?.[fallback] || null,
     };
   }, [stop, selectedLanguage]);
 
